@@ -1,0 +1,1868 @@
+hash,author,author_date,committer,committer_date,msg,parents,num_of_files,num_of_modified_java_files,added_lines,deleted_lines,nloc,jira issue key,summary,issue type,status,resolution
+49df83899543586bbcaf80f01399ade031cf68b0,Steve Loughran,2020-01-09 18:22:04+00:00,Steve Loughran,2020-01-10 11:11:56+00:00,"HADOOP-16697. Tune/audit S3A authoritative mode.
+
+Contains:
+
+HADOOP-16474. S3Guard ProgressiveRenameTracker to mark destination
+              dirirectory as authoritative on success.
+HADOOP-16684. S3guard bucket info to list a bit more about
+              authoritative paths.
+HADOOP-16722. S3GuardTool to support FilterFileSystem.
+
+This patch improves the marking of newly created/import directory
+trees in S3Guard DynamoDB tables as authoritative.
+
+Specific changes:
+
+ * Renamed directories are marked as authoritative if the entire
+   operation succeeded (HADOOP-16474).
+ * When updating parent table entries as part of any table write,
+   there's no overwriting of their authoritative flag.
+
+s3guard import changes:
+
+* new -verbose flag to print out what is going on.
+
+* The ""s3guard import"" command lets you declare that a directory tree
+is to be marked as authoritative
+
+  hadoop s3guard import -authoritative -verbose s3a://bucket/path
+
+When importing a listing and a file is found, the import tool queries
+the metastore and only updates the entry if the file is different from
+before, where different == new timestamp, etag, or length. S3Guard can get
+timestamp differences due to clock skew in PUT operations.
+
+As the recursive list performed by the import command doesn't retrieve the
+versionID, the existing entry may in fact be more complete.
+When updating an existing due to clock skew the existing version ID
+is propagated to the new entry (note: the etags must match; this is needed
+to deal with inconsistent listings).
+
+There is a new s3guard command to audit a s3guard bucket/path's
+authoritative state:
+
+  hadoop s3guard authoritative -check-config s3a://bucket/path
+
+This is primarily for testing/auditing.
+
+The s3guard bucket-info command also provides some more details on the
+authoritative state of a store (HADOOP-16684).
+
+Change-Id: I58001341c04f6f3597fcb4fcb1581ccefeb77d91",['9da294a140a919d9ba648637d09340bccfd5edd6'],32.0,30.0,2393.0,358.0,13520.0,HADOOP-16697,audit/tune s3a authoritative flag in s3guard DDB Table,Sub-task,Resolved,Fixed
+c4fb43c94259546f2c96b50ceae9cd3adb726166,Daryn Sharp,2020-01-10 10:31:39-06:00,Jonathan Eagles,2020-01-10 10:31:39-06:00,"HADOOP-16749. Configuration parsing of CDATA values are blank
+
+Signed-off-by: Jonathan Eagles <jeagles@gmail.com>",['49df83899543586bbcaf80f01399ade031cf68b0'],2.0,2.0,38.0,0.0,4405.0,HADOOP-16749,Configuration parsing of CDATA values are blank,Bug,Resolved,Fixed
+e589f6199c562cb1e478a38f5f2c5dee94880258,Eric Yang,2020-01-10 14:32:02-05:00,Eric Yang,2020-01-10 14:33:12-05:00,"HADOOP-16590.  Update OS login modules for IBM JDK.
+               Contributed by Nicholas Marion
+
+Close #1484",['5fb901ac4017b4f13b089ecd920e864cd53ad3a6'],1.0,1.0,4.0,24.0,1448.0,HADOOP-16590,IBM Java has deprecated OS login module classes and OS principal classes.,Bug,Resolved,Fixed
+5d180463dcb689fa3b7c69b097a86398a03b41ad,David Mollitor,2020-01-15 18:38:34+00:00,Steve Loughran,2020-01-15 18:38:34+00:00,"HADOOP-16790. Add Write Convenience Methods.
+
+Contributed by David Mollitor.
+
+This adds operations in FileUtil to write text to a file via
+either a FileSystem or FileContext instance.
+
+Change-Id: I5fe8fcf1bdbdbc734e137f922a75a822f2b88410",['2aa065d98f36527d7769c9c58a923a706036391d'],2.0,2.0,414.0,0.0,2317.0,HADOOP-16790,Add Write Convenience Methods,New Feature,Resolved,Fixed
+edbbc03ce7d479f1b84d9209021e9d2822909cfe,Vinayakumar B,2020-01-16 23:15:50+05:18,GitHub,2020-01-16 23:15:50+05:18,HADOOP-16621. [pb-upgrade] Remove Protobuf classes from signatures of Public APIs. Contributed by Vinayakumar B. (#1803),['a0ff42d7612e744e0bf88aa14078ea3ab6bcce49'],6.0,4.0,78.0,69.0,3758.0,HADOOP-16621,[pb-upgrade] Remove Protobuf classes from signatures of Public APIs,Sub-task,Resolved,Fixed
+1defe3a65af5faf5117978f4f2cf6a24d17a2e76,Akira Ajisaka,2020-01-21 10:58:32+09:00,Akira Ajisaka,2020-01-21 10:58:32+09:00,HADOOP-16753. Refactor HAAdmin. Contributed by Xieming Li.,['6a859d33aa77260a4329035066c7c63c02df0fcd'],4.0,4.0,296.0,199.0,1607.0,HADOOP-16753,Refactor HAAdmin,Improvement,Resolved,Fixed
+f206b736f0b370d212a399937c7a84e432f12eb5,Sahil Takiar,2020-01-21 16:37:51+00:00,Steve Loughran,2020-01-21 16:37:51+00:00,"HADOOP-16346. Stabilize S3A OpenSSL support.
+
+Introduces `openssl` as an option for `fs.s3a.ssl.channel.mode`.
+The new option is documented and marked as experimental.
+
+For details on how to use this, consult the peformance document
+in the s3a documentation.
+
+This patch is the successor to HADOOP-16050 ""S3A SSL connections
+should use OpenSSL"" -which was reverted because of
+incompatibilities between the wildfly OpenSSL client and the AWS
+HTTPS servers (HADOOP-16347). With the Wildfly release moved up
+to 1.0.7.Final (HADOOP-16405) everything should now work.
+
+Related issues:
+
+* HADOOP-15669. ABFS: Improve HTTPS Performance
+* HADOOP-16050: S3A SSL connections should use OpenSSL
+* HADOOP-16371: Option to disable GCM for SSL connections when running on Java 8
+* HADOOP-16405: Upgrade Wildfly Openssl version to 1.0.7.Final
+
+Contributed by Sahil Takiar
+
+Change-Id: I80a4bc5051519f186b7383b2c1cea140be42444e",['d887e49dd4ed2b94bbb53b7608586f5da6cee037'],9.0,3.0,24.0,8.0,475.0,HADOOP-16346,Stabilize S3A OpenSSL support,Sub-task,Resolved,Fixed
+5e2ce370a322a46b496541ccd17443197fcfeb5a,Steve Loughran,2020-01-21 22:31:51+00:00,Mingliang Liu,2020-01-21 14:31:51-08:00,"HADOOP-16759. Filesystem openFile() builder to take a FileStatus param (#1761). Contributed by Steve Loughran
+
+* Enhanced builder + FS spec
+* s3a FS to use this to skip HEAD on open
+* and to use version/etag when opening the file
+
+works with S3AFileStatus FS and S3ALocatedFileStatus",['0696828a090bc06446f75b29c967697f1d6d845b'],18.0,16.0,487.0,134.0,11821.0,HADOOP-16759,Filesystem openFile() builder to take a FileStatus param,Sub-task,Resolved,Fixed
+839e6076c1db0ed7dee32ba917a03c37ea65dc7c,Steve Loughran,2020-01-24 18:50:16+00:00,Mingliang Liu,2020-01-24 10:50:16-08:00,"HADOOP-16827. TestHarFileSystem.testInheritedMethodsImplemented broken. (#1817)
+
+This is a regression caused by HADOOP-16759.
+
+The test TestHarFileSystem uses introspection to verify that HarFileSystem
+Does not implement methods to which there is a suitable implementation in
+the base FileSystem class. Because of the way it checks this, refactoring
+(protected) FileSystem methods in an IDE do not automatically change
+the probes in TestHarFileSystem.
+
+The changes in HADOOP-16759 did exactly that, and somehow managed
+to get through the build/test process without this being noticed.
+
+This patch fixes that failure.
+
+Caused by and fixed by Steve Loughran.
+
+Change-Id: If60d9c97058242871c02ad1addd424478f84f446
+
+Signed-off-by: Mingliang Liu <liuml07@apache.org>",['d10f77e3c91225f86ed9c0f0e6a9adf2e1434674'],1.0,1.0,3.0,6.0,307.0,HADOOP-16827,TestHarFileSystem.testInheritedMethodsImplemented broken,Sub-task,Resolved,Fixed
+1afd54fbbb858a58112e6290b3063216eea82206,belugabehr,2020-01-25 10:12:21-05:00,Ayush Saxena,2020-01-25 20:30:21+05:18,HADOOP-16811: Use JUnit TemporaryFolder Rule in TestFileUtils (#1811). Contributed by David Mollitor.,['6d008c0d39185f18dbec4676f4d0e7ef77104eb7'],1.0,1.0,65.0,156.0,1072.0,HADOOP-16811,Use JUnit TemporaryFolder Rule in TestFileUtils,Improvement,Resolved,Fixed
+7dac7e1d13eaf0eac04fe805c7502dcecd597979,Vinayakumar B,2020-02-07 14:39:24+05:18,GitHub,2020-02-07 14:39:24+05:18,HADOOP-16596. [pb-upgrade] Use shaded protobuf classes from hadoop-thirdparty dependency (#1635). Contributed by Vinayakumar B.,['5944d28130925fe1452f545e96b5e44f064bc69e'],425.0,402.0,511.0,509.0,96834.0,HADOOP-16596,[pb-upgrade] Use shaded protobuf classes from hadoop-thirdparty dependency,Sub-task,Resolved,Fixed
+3ebf5059651658dd5ed5dbc5fcba4e814b55c34c,Akira Ajisaka,2020-02-07 19:30:06+09:00,Akira Ajisaka,2020-02-07 19:30:06+09:00,HADOOP-16834. Replace com.sun.istack.Nullable with javax.annotation.Nullable in DNS.java. Contributed by Xieming Li.,['7dac7e1d13eaf0eac04fe805c7502dcecd597979'],1.0,1.0,1.0,1.0,224.0,HADOOP-16834,Replace com.sun.istack.Nullable with javax.annotation.Nullable in DNS.java,Bug,Resolved,Fixed
+d36cd37e606e03b4c2b7b25b9155fc5ec5dc379d,testfixer,2020-02-11 05:22:07-06:00,GitHub,2020-02-11 11:22:07+00:00,"HADOOP-16847. Test can fail if HashSet iterates in a different order.
+
+
+Contributed by Testfixer",['d5467d299db3dddcbcd2f77a281d5fa82c4a9e4b'],1.0,1.0,2.0,1.0,581.0,HADOOP-16847,Test TestGroupsCaching fail if HashSet iterates in a different order,Improvement,Resolved,Fixed
+cc8ae591049aff8d477fc372cee2a878f80c2b02,Jan Hentschel,2020-02-11 12:51:45+01:00,GitHub,2020-02-11 11:51:45+00:00,"HADOOP-16851. Removed unused import in Configuration
+
+
+Contributed by Jan Hentschel.",['d36cd37e606e03b4c2b7b25b9155fc5ec5dc379d'],1.0,1.0,0.0,1.0,2267.0,HADOOP-16851,unused import in Configuration class,Bug,Resolved,Fixed
+56dee667707926f3796c7757be1a133a362f05c9,Steve Loughran,2020-02-13 19:08:11+00:00,Steve Loughran,2020-02-13 19:09:49+00:00,"HADOOP-16823. Large DeleteObject requests are their own Thundering Herd.
+
+Contributed by Steve Loughran.
+
+During S3A rename() and delete() calls, the list of objects delete is
+built up into batches of a thousand and then POSTed in a single large
+DeleteObjects request.
+
+But as the IO capacity allowed on an S3 partition may only be 3500 writes
+per second *and* each entry in that POST counts as a single write, then
+one of those posts alone can trigger throttling on an already loaded
+S3 directory tree. Which can trigger backoff and retry, with the same
+thousand entry post, and so recreate the exact same problem.
+
+Fixes
+
+* Page size for delete object requests is set in
+  fs.s3a.bulk.delete.page.size; the default is 250.
+* The property fs.s3a.experimental.aws.s3.throttling (default=true)
+  can be set to false to disable throttle retry logic in the AWS
+  client SDK -it is all handled in the S3A client. This
+  gives more visibility in to when operations are being throttled
+* Bulk delete throttling events are logged to the log
+  org.apache.hadoop.fs.s3a.throttled log at INFO; if this appears
+  often then choose a smaller page size.
+* The metric ""store_io_throttled"" adds the entire count of delete
+  requests when a single DeleteObjects request is throttled.
+* A new quantile, ""store_io_throttle_rate"" can track throttling
+  load over time.
+* DynamoDB metastore throttle resilience issues have also been
+  identified and fixed. Note: the fs.s3a.experimental.aws.s3.throttling
+  flag does not apply to DDB IO precisely because there may still be
+  lurking issues there and it safest to rely on the DynamoDB client
+  SDK.
+
+Change-Id: I00f85cdd94fc008864d060533f6bd4870263fd84",['da99ac7e93722bedd4fca1dd6c992140fcf927e1'],27.0,25.0,1213.0,164.0,11559.0,HADOOP-16823,Large DeleteObject requests are their own Thundering Herd,Sub-task,Resolved,Fixed
+954930e9d97b57bd3f595d2c123f4821f865ca3a,Akira Ajisaka,2020-02-14 15:20:28+09:00,Akira Ajisaka,2020-02-14 15:20:28+09:00,HADOOP-16850. Support getting thread info from thread group for JvmMetrics to improve the performance. Contributed by Tao Yang.,['56dee667707926f3796c7757be1a133a362f05c9'],4.0,3.0,151.0,6.0,726.0,HADOOP-16850,Support getting thread info from thread group for JvmMetrics to improve the performance,Improvement,Resolved,Fixed
+84f763884021980c456e2ebc21c1a1c1b18fec6c,Ayush Saxena,2020-02-18 00:17:21+05:18,Ayush Saxena,2020-02-18 00:31:33+05:18,HADOOP-13666. Supporting rack exclusion in countNumOfAvailableNodes in NetworkTopology. Contributed by Inigo Goiri.,['439d935e1df601ed998521443fbe6752040e7a84'],2.0,2.0,23.0,1.0,1104.0,HADOOP-13666,Supporting rack exclusion in countNumOfAvailableNodes in NetworkTopology,Improvement,Resolved,Fixed
+a562942b05a29d29e4a4fe3df4f35e2a8e7d208d,Steve Loughran,2020-02-17 22:14:39+00:00,GitHub,2020-02-17 22:14:39+00:00,"HADOOP-16759. FileSystem Javadocs to list what breaks on API changes
+
+Followup to the main openFile().withStatus() patch.
+It turns out that this broke the hive builds, which
+was not well appreciated.
+
+This patch lists places to review in the hadoop codebase,
+and external projects where changes are likely to cause problems.
+
+Contributed by Steve Loughran
+
+Change-Id: Ifac815c65b74d083cd277764b780ac2b5b0f6b36",['c77fc6971b5194c9dae184703caa87da271a85eb'],1.0,1.0,19.0,0.0,2058.0,HADOOP-16759,Filesystem openFile() builder to take a FileStatus param,Sub-task,Resolved,Fixed
+0cfff16ac040bd5fb6783333d0d027369c68dead,Arpit Agarwal,2020-02-18 09:50:11-08:00,Arpit Agarwal,2020-02-18 09:50:11-08:00,"HADOOP-16833. InstrumentedLock should log lock queue time. Contributed by Stephen O'Donnell.
+
+Change-Id: Idddff05051b6f642b88e51694b40c5bb1bef0026",['a562942b05a29d29e4a4fe3df4f35e2a8e7d208d'],4.0,4.0,222.0,21.0,601.0,HADOOP-16833,InstrumentedLock should log lock queue time,Improvement,Resolved,Fixed
+cb3f3cca01d6ab9f4befb1bcd31f384c37c0231a,Wei-Chiu Chuang,2020-02-18 21:53:08-08:00,Wei-Chiu Chuang,2020-02-18 21:53:08-08:00,HADOOP-16868. ipc.Server readAndProcess threw NullPointerException. Contributed by Tsz-wo Sze.,['6526f95bd281fc011f8776d21ff933087c5924de'],1.0,1.0,1.0,2.0,2752.0,HADOOP-16868,ipc.Server readAndProcess threw NullPointerException,Bug,Resolved,Fixed
+42dfd270a11419adcb189e8f3a6ddb8f19358088,Sahil Takiar,2020-02-24 08:28:00-08:00,GitHub,2020-02-24 16:28:00+00:00,"HADOOP-16859: ABFS: Add unbuffer support to ABFS connector.
+
+
+Contributed by Sahil Takiar",['7f8685f4760f1358bb30927a7da9a5041e8c39e1'],5.0,4.0,236.0,21.0,494.0,HADOOP-16859,ABFS: Add unbuffer support to AbfsInputStream,Sub-task,Resolved,Fixed
+0dd8956f2e4bd7cd2315ef23703e4b2da1a0d073,Xiaoyu Yao,2020-03-02 08:22:00-05:00,GitHub,2020-03-02 13:22:00+00:00,"HADOOP-16885. Encryption zone file copy failure leaks a temp file
+
+
+Contributed by Xiaoyu Yao.
+
+Contains HDFS-14892. Close the output stream if createWrappedOutputStream() fails
+
+Copying file through the FsShell command into an HDFS encryption zone where
+the caller lacks permissions is leaks a temp ._COPYING file
+and potentially a wrapped stream unclosed.
+
+This is a convergence of a fix for S3 meeting an issue in HDFS.
+
+S3: a HEAD against a file can cache a 404, 
+ -you must not do any existence checks, including deleteOnExit(),
+  until the file is written. 
+
+Hence: HADOOP-16490, only register files for deletion the create worked
+and the upload is not direct. 
+
+HDFS-14892. HDFS doesn't close wrapped streams when IOEs are raised on
+create() failures. Which means that an entry is retained on the NN.
+-you need to register a file with deleteOnExit() even if the file wasn't
+created.
+
+This patch:
+
+* Moves the deleteOnExit to ensure the created file get deleted cleanly.
+* Fixes HDFS to close the wrapped stream on failures.",['1a636da041f2d4f2541a2da9c87f94c3ed234fb0'],2.0,2.0,31.0,22.0,2947.0,HADOOP-16885,Encryption zone file copy failure leaks temp file ._COPYING_ and wrapped stream,Bug,Resolved,Fixed
+5678b19b016934fecfb16177c849668d642c9c7a,cpugputpu,2020-03-03 01:53:38+08:00,GitHub,2020-03-02 17:53:38+00:00,"HADOOP-16897. Sort fields in ReflectionUtils.java.
+
+Contributed by cpugputpu.",['f864ef742960b805b430841c3a1ccb9e11bcc77c'],1.0,1.0,9.0,1.0,262.0,HADOOP-16897,Sort fields in ReflectionUtils.java,Bug,Resolved,Fixed
+d0a7c790c62dbb63b4ce6d5cbe77a33376fa67b0,Steve Loughran,2020-03-03 17:25:22+00:00,GitHub,2020-03-03 17:25:22+00:00,"HADOOP-16885. Fix hadoop-commons TestCopy failure
+
+Followup to HADOOP-16885: Encryption zone file copy failure leaks a temp file
+
+Moving the delete() call broke a mocking test, which slipped through the review process.
+
+Contributed by Steve Loughran.
+
+Change-Id: Ia13faf0f4fffb1c99ddd616d823e4f4d0b7b0cbb",['c0d084247c0d1b7b701bc82e8847096912e5d8a0'],1.0,1.0,1.0,1.0,180.0,HADOOP-16885,Encryption zone file copy failure leaks temp file ._COPYING_ and wrapped stream,Bug,Resolved,Fixed
+18050bc58393cf1c7af225466166f3063d211fbf,Sebastian Nagel,2020-03-09 15:37:08+01:00,GitHub,2020-03-09 14:37:08+00:00,"HADOOP-16909 Typo in distcp counters.
+
+
+Contributed by Sebastian Nagel.",['c6b8a3038646697b77f6db54a2ef6266a9fc7888'],2.0,1.0,4.0,4.0,352.0,HADOOP-16909,Typo in distcp counters,Improvement,Open,
+d4d4c37810d92c927df91d78440c3ad73f46e8a0,Steve Loughran,2020-03-09 14:43:47+00:00,Steve Loughran,2020-03-09 14:44:28+00:00,"HADOOP-14630 Contract Tests to verify create, mkdirs and rename under a file is forbidden
+
+Contributed by Steve Loughran.
+
+Not all stores do complete validation here; in particular the S3A
+Connector does not: checking up the entire directory tree to see if a path matches
+is a file significantly slows things down.
+
+This check does take place in S3A mkdirs(), which walks backwards up the list of
+parent paths until it finds a directory (success) or a file (failure).
+In practice production applications invariably create destination directories
+before writing 1+ file into them -restricting check purely to the mkdirs()
+call deliver significant speed up while implicitly including the checks.
+
+Change-Id: I2c9df748e92b5655232e7d888d896f1868806eb0",['18050bc58393cf1c7af225466166f3063d211fbf'],11.0,9.0,273.0,42.0,4131.0,HADOOP-14630,"Contract Tests to verify create, mkdirs and rename under a file is forbidden",Improvement,Resolved,Fixed
+c734d69a55693143d0aba2f7f5a793b11c8c50a5,Steve Loughran,2020-03-09 14:50:47+00:00,Steve Loughran,2020-03-09 14:51:16+00:00,"HADOOP-16898. Batch listing of multiple directories via an (unstable) interface
+
+Contributed by Steve Loughran.
+
+This moves the new API of HDFS-13616 into a interface which is implemented by
+HDFS RPC filesystem client (not WebHDFS or any other connector)
+
+This new interface, BatchListingOperations, is in hadoop-common,
+so applications do not need to be compiled with HDFS on the classpath.
+They must cast the FS into the interface.
+
+instanceof can probe the client for having the new interface -the patch
+also adds a new path capability to probe for this.
+
+The FileSystem implementation is cut; tests updated as appropriate.
+
+All new interfaces/classes/constants are marked as @unstable.
+
+Change-Id: I5623c51f2c75804f58f915dd7e60cb2cffdac681",['d4d4c37810d92c927df91d78440c3ad73f46e8a0'],8.0,8.0,94.0,39.0,5626.0,HADOOP-16898,Batch listing of multiple directories to be an unstable interface,Improvement,Resolved,Fixed
+f197f05cff17a3ae8c4f2d377a0375b38c404879,Wei-Chiu Chuang,2020-03-16 10:56:30-07:00,GitHub,2020-03-16 10:56:30-07:00,HADOOP-16661. Support TLS 1.3 (#1880),['ea688631b02bee4d514b4baa4d754fac8c41ff3a'],2.0,1.0,48.0,13.0,407.0,HADOOP-16661,Support TLS 1.3,New Feature,Resolved,Fixed
+e3fbdcbc141bff6c78c24387906a277d518660ae,Chao Sun,2020-03-25 10:21:20-07:00,Chao Sun,2020-03-25 10:21:20-07:00,HADOOP-16912. Emit per priority RPC queue time and processing time from DecayRpcScheduler. Contributed by Fengnan Li.,['2d294bd575f81ced4b562ac7275b014c267e480d'],7.0,6.0,258.0,29.0,1539.0,HADOOP-16912,Emit per priority RPC queue time and processing time from DecayRpcScheduler,New Feature,Resolved,Fixed
+b89d875f7b1db4a98d37f13040eecc5afdf1a485,Takanobu Asanuma,2020-04-06 11:03:10+09:00,Takanobu Asanuma,2020-04-06 11:03:10+09:00,"HADOOP-16954. Add -S option in ""Count"" command to show only Snapshot Counts. Contributed by hemanthboyina.",['e6455cc864d932469610e86644162fa324589067'],6.0,4.0,105.0,7.0,1170.0,HADOOP-16954,"Add -S option in ""Count"" command to show only Snapshot Counts",Improvement,Resolved,Fixed
+5746533cde0065761a68a9b3e89ee01da6c8eeeb,Ayush Saxena,2020-04-09 23:17:48+05:18,Ayush Saxena,2020-04-09 23:18:28+05:18,HADOOP-16962. Making `getBoolean` log warning message for unrecognized value. Contributed by Ctest.,['061afcdf30ce10d04986672a0583d925d3f8f741'],1.0,1.0,5.0,1.0,2271.0,HADOOP-16962,Making `getBoolean` log warning message for unrecognized value,Bug,Resolved,Fixed
+2ea5adf2de31fce3b2948f651801073092b8fbc7,Ayush Saxena,2020-04-12 11:19:07+05:18,Ayush Saxena,2020-04-12 11:19:07+05:18,HADOOP-16967. TestSequenceFile#testRecursiveSeqFileCreate fails in subsequent run. Contributed by Ctest.,['275c478330d5c8cae3c15b876cc8128d164e9fa0'],1.0,1.0,13.0,7.0,661.0,HADOOP-16967,TestSequenceFile#testRecursiveSeqFileCreate fails in subsequent run ,Bug,Resolved,Fixed
+3edbe8708a80128d2aeae20582866536a6b56f6b,Ayush Saxena,2020-04-14 02:01:42+05:18,Ayush Saxena,2020-04-14 02:01:42+05:18,HADOOP-16958. NPE when hadoop.security.authorization is enabled but the input PolicyProvider for ZKFCRpcServer is NULL. Contributed by Ctest.,['11d17417ceba0f1a2944e0c8b4286515c4883889'],2.0,2.0,54.0,0.0,518.0,HADOOP-16958,NPE when hadoop.security.authorization is enabled but the input PolicyProvider for ZKFCRpcServer is NULL,Bug,Resolved,Fixed
+eca05917d60f8a06f2a04815db818a7d3afbd2ce,belugabehr,2020-04-17 11:16:12-04:00,GitHub,2020-04-17 08:16:12-07:00,"HADOOP-16951: Tidy Up Text and ByteWritables Classes.
+
+1. Remove superfluous code
+2. Remove superfluous comments
+3. Checkstyle fixes
+4. Remove methods that simply call super.method()
+5. Use Java 8 facilities to streamline code where applicable
+6. Simplify and unify some of the constructs between the two classes
+7. Expanding of the arrays be 1.5x instead of 2x per expansion.",['2fe122e322afd35dfae6e45b3e7fdaddd20a411f'],3.0,3.0,148.0,144.0,881.0,HADOOP-16951,Tidy Up Text and ByteWritables Classes,Improvement,Resolved,Fixed
+79e03fb622f824053df6cc4c973d6723659adc46,Ayush Saxena,2020-04-20 01:47:18+05:18,Ayush Saxena,2020-04-20 01:47:18+05:18,HADOOP-16971. TestFileContextResolveAfs#testFileContextResolveAfs creates dangling link and fails for subsequent runs. Contributed by Ctest.,['1824aee9da4056de0fb638906b2172e486bbebe7'],1.0,1.0,2.0,2.0,37.0,HADOOP-16971,TestFileContextResolveAfs#testFileContextResolveAfs creates dangling link and fails for subsequent runs,Bug,Resolved,Fixed
+42711081e3cba5835493b5cbedc23d16dfea7667,Steve Loughran,2020-04-20 14:32:13+01:00,GitHub,2020-04-20 14:32:13+01:00,"HADOOP-16986. S3A to not need wildfly on the classpath. (#1948)
+
+HADOOP-16986. S3A to not need wildfly JAR on its classpath.
+
+Contributed by Steve Loughran
+
+This is a successor to HADOOP-16346, which enabled the S3A connector
+to load the native openssl SSL libraries for better HTTPS performance.
+
+That patch required wildfly.jar to be on the classpath. This
+update:
+
+* Makes wildfly.jar optional except in the special case that 
+""fs.s3a.ssl.channel.mode"" is set to ""openssl""
+
+* Retains the declaration of wildfly.jar as a compile-time
+dependency in the hadoop-aws POM. This means that unless
+explicitly excluded, applications importing that published
+maven artifact will, transitively, add the specified
+wildfly JAR into their classpath for compilation/testing/
+distribution.
+
+This is done for packaging and to offer that optional
+speedup. It is not mandatory: applications importing
+the hadoop-aws POM can exclude it if they choose.",['82ff7bc9abc8f3ad549db898953d98ef142ab02d'],5.0,3.0,244.0,85.0,345.0,HADOOP-16986,s3a to not need wildfly on the classpath,Sub-task,Resolved,Fixed
+af85971a5842e47cf94b6e48de3091a8723b0eb3,Mingliang Liu,2020-04-22 12:36:19-07:00,Mingliang Liu,2020-04-22 12:36:33-07:00,HADOOP-17001. The suffix name of the unified compression class. Contributed by bianqi,['3d69383c26649e272ce591061c919b8c96ee7cfc'],8.0,8.0,76.0,7.0,1036.0,HADOOP-17001,The suffix name of the unified compression class,Improvement,Resolved,Fixed
+ef9a6e775c136b2a591a76d5e34d07974a356e0d,Ayush Saxena,2020-04-25 12:55:32+05:18,Ayush Saxena,2020-04-25 12:55:32+05:18,HADOOP-16886. Add hadoop.http.idle_timeout.ms to core-default.xml. Contributed by Lisheng Sun.,['453771f170a062265b7687b31b2a3735827958fb'],2.0,1.0,9.0,0.0,330.0,HADOOP-16886,Add hadoop.http.idle_timeout.ms to core-default.xml,Improvement,Resolved,Fixed
+4202750040f91f8dcc218ecc7d3ccf81a8e68b2a,lfengnan,2020-04-28 16:14:55-07:00,GitHub,2020-04-28 16:14:55-07:00,HADOOP-17010. Add queue capacity support for FairCallQueue (#1977),['ab3642955971dec1ce285f39cf0f02e6cc64b4b2'],5.0,4.0,138.0,9.0,1482.0,HADOOP-17010,Add queue capacity weights support in FairCallQueue,New Feature,Resolved,Fixed
+6bdab3723eff78c79aa48c24aad87373b983fe6c,Ayush Saxena,2020-04-30 19:43:20+05:18,Ayush Saxena,2020-04-30 19:43:20+05:18,HADOOP-16957. NodeBase.normalize doesn't removing all trailing slashes. Contributed by Ayush Saxena.,['b5b45c53a4ed9fff2b050774c2d82522578d428a'],2.0,2.0,16.0,1.0,288.0,HADOOP-16957,NodeBase.normalize doesn't removing all trailing slashes.,Bug,Resolved,Fixed
+263c76b678275dfff867415c71ba9dc00a9235ef,Mingliang Liu,2020-04-30 14:13:21-07:00,Mingliang Liu,2020-04-30 14:15:28-07:00,"HADOOP-17011. Tolerate leading and trailing spaces in fs.defaultFS. Contributed by Ctest
+
+Signed-off-by: Ayush Saxena <ayushsaxena@apache.org>",['6bdab3723eff78c79aa48c24aad87373b983fe6c'],9.0,9.0,16.0,11.0,4764.0,HADOOP-17011,Tolerate leading and trailing spaces in fs.defaultFS,Bug,Resolved,Fixed
+e9e1ead089c0b9f5f1788361329a64fec6561352,Mingliang Liu,2020-05-07 16:50:23-07:00,Mingliang Liu,2020-05-07 16:50:23-07:00,HADOOP-17027. Add tests for reading fair call queue capacity weight configs. Contributed by Fengnan Li,['d59de27c01d7f74a15471fb6021ecf9cd54c7025'],2.0,2.0,65.0,15.0,951.0,HADOOP-17027,Add tests for reading fair call queue capacity weight configs,Sub-task,Resolved,Fixed
+328eae9a146b2dd9857a17a0db6fcddb1de23a0d,Akira Ajisaka,2020-05-11 14:44:18+09:00,GitHub,2020-05-11 14:44:18+09:00,HADOOP-16768. SnappyCompressor test cases wrongly assume that the compressed data is always smaller than the input data. (#2003),['aab9e0b16ecc8fa00228c00c7ab90e55195cf5f4'],2.0,2.0,105.0,69.0,791.0,HADOOP-16768,SnappyCompressor test cases wrongly assume that the compressed data is always smaller than the input data,Bug,Resolved,Fixed
+a3f945fb8466d461d42ce60f0bc12c96fbb2db23,Elixir Kook,2020-05-13 00:50:04+09:00,GitHub,2020-05-12 10:50:04-05:00,"HADOOP-17035. fixed typos (timeout, interruped) (#2007)
+
+Co-authored-by: Sungpeo Kook <elixir.kook@kakaocorp.com>",['047d8879e7a1bf4dbf6b99815a78b384cd5d514c'],4.0,3.0,4.0,4.0,3269.0,HADOOP-17035,"Trivial typo(s) which are 'timout', 'interruped' in comment, LOG and documents",Bug,Resolved,Fixed
+017d24e9703e9447f88ba94df3a8aa0800de770b,Mike,2020-05-14 20:28:00+03:00,GitHub,2020-05-14 18:28:00+01:00,"HADOOP-17036. TestFTPFileSystem failing as ftp server dir already exists.
+
+
+Contributed by Mikhail Pryakhin.",['7836bc4c3533e93e7adc0c7da0659bc04bdf2494'],1.0,1.0,6.0,3.0,186.0,HADOOP-17036,TestFTPFileSystem failing as ftp server dir already exists,Improvement,Resolved,Fixed
+ce4ec7445345eb94c6741d416814a4eac319f0a6,Abhishek Das,2020-05-18 22:27:12-07:00,GitHub,2020-05-18 22:27:12-07:00,"HADOOP-17024. ListStatus on ViewFS root (ls ""/"") should list the linkFallBack root (configured target root). Contributed by Abhishek Das.",['bdbd59cfa0904860fc4ce7a2afef1e84f35b8b82'],4.0,4.0,209.0,2.0,2882.0,HADOOP-17024,"ListStatus on ViewFS root (ls ""/"") should list the linkFallBack root (configured target root).",Bug,Resolved,Fixed
+d9e8046a1a15ab295b642b2a5e86f436c1965254,S O'Donnell,2020-05-29 10:32:37+01:00,S O'Donnell,2020-05-29 10:32:37+01:00,HADOOP-14698. Make copyFromLocals -t option available for put as well. Contributed by Andras Bokor.,['d9838f2d42eaadd0769167847af4e8f2963817fb'],5.0,3.0,61.0,74.0,557.0,HADOOP-14698,Make copyFromLocal's -t option available for put as well,Improvement,Resolved,Fixed
+9fe4c37c25b256d31202854066eb7e15c6335b9f,Dhiraj,2020-06-01 10:49:17-07:00,GitHub,2020-06-01 10:49:17-07:00,"HADOOP-17052. NetUtils.connect() throws unchecked exception (UnresolvedAddressException) causing clients to abort (#2036)
+
+Contributed by Dhiraj Hegde.
+
+Signed-off-by: Mingliang Liu <liuml07@apache.org>",['ae13a5ccbea10fe86481adbbff574c528e03c7f6'],2.0,2.0,22.0,1.0,1112.0,HADOOP-17052,NetUtils.connect() throws unchecked exception (UnresolvedAddressException) causing clients to abort,Bug,Resolved,Fixed
+6288e15118fab65a9a1452898e639313c6996769,Xiaoyu Yao,2020-06-02 11:53:08-07:00,Xiaoyu Yao,2020-06-02 11:53:32-07:00,HADOOP-16828. Zookeeper Delegation Token Manager fetch sequence number by batch. Contributed by Fengnan Li.,['ed83c865dd0b4e92f3f89f79543acc23792bb69c'],2.0,2.0,93.0,13.0,1246.0,HADOOP-16828,Zookeeper Delegation Token Manager fetch sequence number by batch,Improvement,Resolved,Fixed
+97c98ce531ccb27581cbb10260d7307b0ccd199c,Mike,2020-06-03 13:37:40+03:00,GitHub,2020-06-03 11:37:40+01:00,"HADOOP-14566. Add seek support for SFTP FileSystem. (#1999)
+
+
+Contributed by Mikhail Pryakhin",['9c290c08db4361de29f392b0569312c2623b8321'],7.0,6.0,234.0,45.0,967.0,HADOOP-14566,Add seek support for SFTP FileSystem,Improvement,Resolved,Fixed
+e7dd02768b658b2a1f216fbedc65938d9b6ca6e9,Abhishek Das,2020-06-05 14:56:51-07:00,GitHub,2020-06-05 14:56:51-07:00,HADOOP-17029. Return correct permission and owner for listing on internal directories in ViewFs. Contributed by Abhishek Das.,['76fa0222f0d2e2d92b4a1eedba8b3e38002e8c23'],3.0,3.0,146.0,40.0,2273.0,HADOOP-17029,ViewFS does not return correct user/group and ACL,Bug,Resolved,Fixed
+9f242c215e1969ffec2fa2e24e65edc712097641,Mingliang Liu,2020-06-08 10:11:30-07:00,Mingliang Liu,2020-06-08 10:11:30-07:00,HADOOP-17059. ArrayIndexOfboundsException in ViewFileSystem#listStatus. Contributed by hemanthboyina,['a8610c15c498531bf3c011f1b0ace8eddddf61f2'],2.0,2.0,23.0,1.0,1973.0,HADOOP-17059,ArrayIndexOfboundsException in ViewFileSystem#listStatus,Bug,Resolved,Fixed
+0c25131ca430fcd6bf0f2c77dc01f027b92a9f4f,Mingliang Liu,2020-06-08 11:28:36-07:00,Mingliang Liu,2020-06-08 11:28:56-07:00,HADOOP-17047. TODO comment exist in trunk while related issue HADOOP-6223 is already fixed. Contributed by Rungroj Maipradit,['9f242c215e1969ffec2fa2e24e65edc712097641'],1.0,1.0,3.0,3.0,1187.0,HADOOP-17047,TODO comments exist in trunk while the related issues are already fixed.,Improvement,Resolved,Fixed
+93b121a9717bb4ef5240fda877ebb5275f6446b4,Uma Maheswara Rao G,2020-06-10 15:00:02-07:00,GitHub,2020-06-10 15:00:02-07:00,HADOOP-17060. Clarify listStatus and getFileStatus behaviors inconsistent in the case of ViewFs implementation for isDirectory. Contributed by Uma Maheswara Rao G.,['b735a777178a3be7924b0ea7c0f61003dc60f16e'],4.0,4.0,94.0,13.0,5133.0,HADOOP-17060,listStatus and getFileStatus behave inconsistent in the case of ViewFs implementation for isDirectory,Bug,Resolved,Fixed
+e15408477017753ea1a0896c8f54daeadee40d10,Vinayakumar B,2020-06-12 23:04:33+05:18,GitHub,2020-06-12 23:04:33+05:18,HADOOP-17046. Support downstreams' existing Hadoop-rpc implementations using non-shaded protobuf classes (#2026),['7c4de59fc10953170bbef9a320ce70bcddae8bba'],81.0,77.0,2069.0,167.0,33494.0,HADOOP-17046,Support downstreams' existing Hadoop-rpc implementations using non-shaded protobuf classes.,Improvement,Resolved,Fixed
+c8ed33cd2a4b92618ba2bd7d2cd6cc7961690e44,Ayush Saxena,2020-06-17 13:43:40+05:18,Ayush Saxena,2020-06-17 13:43:40+05:18,"HADOOP-9851. dfs -chown does not like ""+"" plus sign in user name. Contributed by Andras Bokor.",['fc4ebb0499fe1095b87ff782c265e9afce154266'],2.0,2.0,4.0,1.0,3093.0,HADOOP-9851,"dfs -chown does not like ""+"" plus sign in user name",Bug,Resolved,Fixed
+2bfb22840acc9f96a8bdec1ef82da37d06937da8,Mehakmeet Singh,2020-06-17 20:33:26+05:18,GitHub,2020-06-17 16:15:26+01:00,"HADOOP-17020. Improve RawFileSystem Performance (#2063)
+
+
+Contributed by : Mehakmeet Singh
+
+Co-authored-by: Rajesh Balamohan
+Co-authored-by: Mehakmeet Singh",['5b1a56f9f1aec7d75b14a60d0c42192b04407356'],1.0,1.0,10.0,3.0,821.0,HADOOP-17020,Improve RawFileSystem Performance,Improvement,Resolved,Fixed
+100ec8e8709e79a6729aab0dac15e080dd747ee5,belugabehr,2020-06-19 13:23:43-04:00,GitHub,2020-06-19 10:23:43-07:00,HADOOP-17009: Embrace Immutability of Java Collections,['3472c3efc0014237d0cc4d9a989393b8513d2ab6'],20.0,20.0,55.0,65.0,5975.0,HADOOP-17009,Embrace Immutability of Java Collections,Improvement,Resolved,Fixed
+fa14e4bc001e28d9912e8d985d09bab75aedb87c,He Xiaoqiao,2020-06-23 16:13:43+08:00,He Xiaoqiao,2020-06-23 16:59:51+08:00,HADOOP-17068. Client fails forever when namenode ipaddr changed. Contributed by Sean Chow.,['7c02d1889bbeabc73c95a4c83f0cd204365ff410'],1.0,1.0,11.0,2.0,1332.0,HADOOP-17068,client fails forever when namenode ipaddr changed,Bug,Resolved,Fixed
+3b8d0f803f1c6277f2c17a73cf4803ab0bd9954b,Abhishek Das,2020-07-01 00:28:35-07:00,GitHub,2020-07-01 12:46:35+05:18,HADOOP-17032. Fix getContentSummary in ViewFileSystem to handle multiple children mountpoints pointing to different filesystems (#2060). Contributed by Abhishek Das.,['ff8bb672000980f3de7391e5d268e789d5cbe974'],2.0,2.0,98.0,0.0,2349.0,HADOOP-17032,Handle an internal dir in viewfs having multiple children mount points pointing to different filesystems,Bug,Resolved,Fixed
+2f500e4635ea4347a55693b1a10a4a4465fe5fac,Madhusoodan Pataki,2020-07-06 20:43:42+05:18,GitHub,2020-07-06 16:25:42+01:00,"HADOOP-17081. MetricsSystem doesn't start the sink adapters on restart (#2089)
+
+
+Contributed by Madhusoodan P",['639acb6d8921127cde3174a302f2e3d71b44f052'],2.0,2.0,26.0,1.0,1075.0,HADOOP-17081,MetricsSystem doesn't start the sink adapters on restart,Bug,Resolved,Fixed
+f91a8ad88b00b50231f1ae3f8820a25c963bb561,Xiaoyu Yao,2020-07-09 11:33:37-07:00,GitHub,2020-07-09 11:33:37-07:00,HADOOP-17079. Optimize UGI#getGroups by adding UGI#getGroupsSet. (#2085),['5dd270e2085c8e8c3428287ed6f0c541a5548a31'],41.0,41.0,502.0,188.0,16682.0,HADOOP-17079,Optimize UGI#getGroups by adding UGI#getGroupsSet,Improvement,Resolved,Fixed
+e62d8f841275ee47a0ba911415aac9e39af291c6,Hanisha Koneru,2020-07-13 12:55:34-07:00,Hanisha Koneru,2020-07-13 12:55:34-07:00,HADOOP-17116. Skip Retry INFO logging on first failover from a proxy,['0427100b7543d412f4fafe631b7ace289662d28c'],1.0,1.0,15.0,6.0,357.0,HADOOP-17116,Skip Retry INFO logging on first failover from a proxy,Bug,Resolved,Fixed
+317fe4584a51cfe553e4098d48170cd2898b9732,Erik Krogen,2020-07-14 11:22:16-07:00,Erik Krogen,2020-07-14 11:22:25-07:00,HADOOP-17127. Use RpcMetrics.TIMEUNIT to initialize rpc queueTime and processingTime. Contributed by Jim Brennan.,['4647a60430136aa4abc18d5112b93a8b927dbd1f'],3.0,3.0,14.0,9.0,1980.0,HADOOP-17127,Use RpcMetrics.TIMEUNIT to initialize rpc queueTime and processingTime,Improvement,Resolved,Fixed
+1f71c4ae71427a8a7476eaef64187a5643596552,Ahmed Hussein,2020-07-15 11:39:06-05:00,Jonathan Eagles,2020-07-15 11:39:06-05:00,"HADOOP-17099. Replace Guava Predicate with Java8+ Predicate
+
+Signed-off-by: Jonathan Eagles <jeagles@gmail.com>",['98fcffe93f9ef910654574f69591fcdc621523af'],10.0,9.0,90.0,160.0,3920.0,HADOOP-17099,Replace Guava Predicate with Java8+ Predicate,Sub-task,Resolved,Fixed
+b21cb91c7f766b4d2920b893f756a0431f925a18,Mukund Thakur,2020-07-16 22:27:59+05:18,GitHub,2020-07-16 18:09:59+01:00,"HADOOP-17130. Configuration.getValByRegex() shouldn't be updating the results while fetching. (#2142)
+
+
+Contributed by Mukund Thakur",['4083fd57b5e0465a06bab82f6f6e09faa0c0388c'],1.0,1.0,4.0,2.0,2273.0,HADOOP-17130,Configuration.getValByRegex() shouldn't update the results while fetching.,Bug,Resolved,Fixed
+6bcb24d26930b3a2abfdd533f4aea0ce670c78a1,Ayush Saxena,2020-07-18 14:21:43+05:18,Ayush Saxena,2020-07-18 14:21:43+05:18,HADOOP-17100. Replace Guava Supplier with Java8+ Supplier in Hadoop. Contributed by Ahmed Hussein.,['2ba44a73bf2bb7ef33a2259bd19ee62ef9bb5659'],148.0,147.0,151.0,151.0,91998.0,HADOOP-17100,Replace Guava Supplier with Java8+ Supplier in Hadoop,Sub-task,Resolved,Fixed
+f2033de2342d20d5f540775dfe4848d452c68957,Ayush Saxena,2020-07-20 22:01:48+05:18,Ayush Saxena,2020-07-20 22:01:48+05:18,HADOOP-17119. Jetty upgrade to 9.4.x causes MR app fail with IOException. Contributed by Bilwa S T.,['6cbd8854ee5f2c33496ac7ae397e366cf136dd07'],1.0,1.0,5.0,1.0,1267.0,HADOOP-17119,Jetty upgrade to 9.4.x causes MR app fail with IOException,Bug,Resolved,Fixed
+1b29c9bfeee0035dd042357038b963843169d44c,Masatake Iwasaki,2020-07-22 13:40:20+09:00,GitHub,2020-07-22 13:40:20+09:00,HADOOP-17138. Fix spotbugs warnings surfaced after upgrade to 4.0.6. (#2155),['d23cc9d85d887f01d72180bdf1af87dfdee15c5a'],9.0,6.0,29.0,24.0,5484.0,HADOOP-17138,Fix spotbugs warnings surfaced after upgrade to 4.0.6,Bug,Resolved,Fixed
+e60096c377d8a3cb5bed3992352779195be95bb4,belugabehr,2020-07-24 05:37:28-04:00,GitHub,2020-07-24 10:37:28+01:00,"HADOOP-17141. Add Capability To Get Text Length (#2157)
+
+
+Contributed by David Mollitor",['247eb0979b6a3a723ea9a249ba4db1ee079eb909'],2.0,2.0,28.0,0.0,791.0,HADOOP-17141,Add Capability To Get Text Length,Improvement,Resolved,Fixed
+2986058e7f6fa1b5aab259c64a745b2eedb2febe,sguggilam,2020-08-04 10:30:06-07:00,GitHub,2020-08-04 10:30:06-07:00,"HADOOP-17164. UGI loginUserFromKeytab doesn't set the last login time (#2178)
+
+Contributed by Sandeep Guggilam.
+
+Signed-off-by: Mingliang Liu <liuml07@apache.org>
+Signed-off-by: Steve Loughran <stevel@apache.org>",['8fd4f5490f59a2e9e561b6438b30b3a7453c808b'],2.0,2.0,37.0,1.0,1886.0,HADOOP-17164,UGI loginUserFromKeytab doesn't set the last login time,Bug,Resolved,Fixed
+5092ea62ecbac840d56978a31bb11cfc14c6fe83,Steve Loughran,2020-08-15 12:51:08+01:00,Steve Loughran,2020-08-15 12:51:08+01:00,"HADOOP-13230. S3A to optionally retain directory markers.
+
+This adds an option to disable ""empty directory"" marker deletion,
+so avoid throttling and other scale problems.
+
+This feature is *not* backwards compatible.
+Consult the documentation and use with care.
+
+Contributed by Steve Loughran.
+
+Change-Id: I69a61e7584dc36e485d5e39ff25b1e3e559a1958",['e3d1966f58ad473b8e852aa2b11c8ed2b434d9e4'],53.0,48.0,7026.0,923.0,15943.0,HADOOP-13230,S3A to optionally retain directory markers,Sub-task,Resolved,Fixed
+960fb0aa4f5a6f8b35ee210248f69ecfe25ddb15,Joey,2020-08-24 21:01:48+08:00,GitHub,2020-08-24 14:01:48+01:00,"HADOOP-16925. MetricsConfig incorrectly loads the configuration whose value is String list in the properties file (#1896)
+
+
+Contributed by Jiayi Liu",['17cd8a1b1627f4d87ddc5dcc2ec7c738ffdc576b'],2.0,2.0,18.0,0.0,322.0,HADOOP-16925,MetricsConfig incorrectly loads the configuration whose value is String list in the properties file,Bug,Resolved,Fixed
+a932796d0cad3d84df0003782e4247cbc2dcca93,sguggilam,2020-08-24 23:39:57-07:00,GitHub,2020-08-24 23:39:57-07:00,"HADOOP-17159 Ability for forceful relogin in UserGroupInformation class (#2197)
+
+Contributed by Sandeep Guggilam.
+
+Signed-off-by: Mingliang Liu <liuml07@apache.org>
+Signed-off-by: Steve Loughran <stevel@apache.org>",['64f36b9543c011ce2f1f7d1e10da0eab88a0759d'],2.0,2.0,64.0,7.0,1917.0,HADOOP-17159,Make UGI support forceful relogin from keytab ignoring the last login time,Improvement,Resolved,Fixed
+d8aaa8c3380451cd04bbc1febdd756a8db07d5c3,sguggilam,2020-08-26 23:45:21-07:00,GitHub,2020-08-26 23:45:21-07:00,"HADOOP-17159. Make UGI support forceful relogin from keytab ignoring the last login time (#2249)
+
+Contributed by Sandeep Guggilam.
+
+Signed-off-by: Mingliang Liu <liuml07@apache.org>
+Signed-off-by: Steve Loughran <stevel@apache.org>",['2ffe00fc46aa74929e722dc1804fb0b3d48ee7a9'],2.0,2.0,66.0,6.0,1920.0,HADOOP-17159,Make UGI support forceful relogin from keytab ignoring the last login time,Improvement,Resolved,Fixed
+bfd99f31fd6641e60daf8c9cf8d2ad7c2fc9eaa3,Ayush Saxena,2020-08-28 17:26:23+05:18,Ayush Saxena,2020-08-28 17:26:23+05:18,HADOOP-17232. Erasure Coding: Typo in document. Contributed by Fei Hui.,['30b1b1cc04738a9715304a2f8d58692c1144e8c1'],3.0,1.0,1.0,1.0,129.0,HADOOP-17232,Erasure Coding: Typo in document,Improvement,Resolved,Fixed
+7e671f3b657fe5b8bd7a3946ee8e6b3f975564c5,He Xiaoqiao,2020-09-01 11:35:55+08:00,He Xiaoqiao,2020-09-01 11:35:55+08:00,HADOOP-17235. Erasure Coding: Remove dead code from common side. Contributed by Fei Hui.,['658b1a6cde6834be41de8745684b9c40f8b9c12c'],3.0,3.0,0.0,59.0,414.0,HADOOP-17235,Erasure Coding: Remove dead code from common side,Improvement,Resolved,Fixed
+2029556dbb049342df28ab93d1e940a1db1374da,Steve Loughran,2020-09-09 11:58:26+01:00,GitHub,2020-09-09 11:58:26+01:00,"HADOOP-17181. Handle transient stream read failures in FileSystem contract tests (#2286)
+
+
+Contributed by Steve Loughran.
+
+* Fixes AbstractContractSeekTest test to use readFully
+* Doesn't do this to AbstractContractUnbufferTest test as it changes the test too much.
+Instead just notes in the error that this may be transient
+
+The issue is that read(buffer) doesn't guarantee that the buffer is filled, only that it will
+read up to a point, and that may be just be the amount of data left in the TCP packet.
+readFully corrects for this, but using it in the unbuffer test runs the risk that what
+is tested for in terms of unbuffering doesn't actually get validated.",['aba4a506d64169238d3b3fd0b2b2afcd6c1796c3'],2.0,2.0,4.0,4.0,559.0,HADOOP-17181,Handle transient stream read failures in FileSystem contract tests,Sub-task,Resolved,Fixed
+e5fe326270259a6bd2a79b5082c65ea9e17ba4da,Takanobu Asanuma,2020-09-10 01:56:58+09:00,GitHub,2020-09-09 09:56:58-07:00,HADOOP-17165. Implement service-user feature in DecayRPCScheduler. (#2240),['85119267be75d7960e2880d251ccaf3bda4a87d9'],5.0,3.0,77.0,4.0,1198.0,HADOOP-17165,Implement service-user feature in DecayRPCScheduler,New Feature,Resolved,Fixed
+9960c01a25c6025e81559a8cf32e9f3cea70d2cc,Steve Loughran,2020-09-10 17:03:52+01:00,GitHub,2020-09-10 17:03:52+01:00,"HADOOP-17244. S3A directory delete tombstones dir markers prematurely. (#2280)
+
+
+This changes directory tree deletion so that only files are incrementally deleted
+from S3Guard after the objects are deleted; the directories are left alone
+until metadataStore.deleteSubtree(path) is invoke.
+
+This avoids directory tombstones being added above files/child directories,
+which stop the treewalk and delete phase from working.
+
+Also:
+
+* Callback to delete objects splits files and dirs so that
+any problems deleting the dirs doesn't trigger s3guard updates
+* New statistic to measure #of objects deleted, alongside request count.
+* Callback listFilesAndEmptyDirectories renamed listFilesAndDirectoryMarkers
+  to clarify behavior.
+* Test enhancements to replicate the failure and verify the fix
+
+Contributed by Steve Loughran",['43c52d64950f55a1057a51f00c8bdca04cb915dc'],13.0,13.0,201.0,30.0,9323.0,HADOOP-17244,HADOOP-17244. S3A directory delete tombstones dir markers prematurely.,Sub-task,Resolved,Fixed
+12a316cdf9994feaa36c3ff7d13e67d70398a9f3,zz,2020-09-10 21:20:32-07:00,GitHub,2020-09-10 21:20:32-07:00,"HADOOP-15891. provide Regex Based Mount Point In Inode Tree (#2185). Contributed by Zhenzhao Wang.
+
+Co-authored-by: Zhenzhao Wang <zhenzhaowang@gmail.com>",['9960c01a25c6025e81559a8cf32e9f3cea70d2cc'],14.0,13.0,1702.0,116.0,2917.0,HADOOP-15891,Provide Regex Based Mount Point In Inode Tree,New Feature,Resolved,Fixed
+56ebabd426757dd95c778535548abb8c01fbc1fb,1996fanrui,2020-09-11 13:30:52+08:00,GitHub,2020-09-10 22:30:52-07:00,"HADOOP-17222. Create socket address leveraging URI cache (#2241)
+
+Contributed by fanrui.
+
+Signed-off-by: Mingliang Liu <liuml07@apache.org>
+Signed-off-by: He Xiaoqiao <hexiaoqiao@apache.org>",['12a316cdf9994feaa36c3ff7d13e67d70398a9f3'],8.0,7.0,160.0,33.0,4123.0,HADOOP-17222, Create socket address leveraging URI cache,Improvement,Resolved,Fixed
+6adf8462bafc27e3f4bf83948a974c089bd70682,Xiaoyu Yao,2020-09-17 10:39:19-07:00,GitHub,2020-09-17 10:39:19-07:00,HADOOP-17208. LoadBalanceKMSClientProvider#deleteKey should invalidateCache via all KMSClientProvider instances. (#2259),['20a0e6278d6c9430cd103ffc0f5fb9cff214ae04'],2.0,2.0,11.0,11.0,758.0,HADOOP-17208,LoadBalanceKMSClientProvider#deleteKey should invalidateCache via all KMSClientProvider instances,Improvement,Resolved,Fixed
+364b958085ef71510280f45b2a96df9eb4762565,Masatake Iwasaki,2020-09-20 00:47:02+09:00,GitHub,2020-09-20 00:47:02+09:00,HADOOP-17270. Fix testCompressorDecompressorWithExeedBufferLimit to c… (#2311),['e31a636e922a8fdbe0aa7cca53f6de7175e97254'],1.0,1.0,14.0,11.0,63.0,HADOOP-17270,Fix testCompressorDecompressorWithExeedBufferLimit to cover the intended scenario,Improvement,Resolved,Fixed
+c8c1cc43d35daa1469ccaf54f2172daa2da94be3,crossfire,2020-09-22 03:10:51+09:00,GitHub,2020-09-21 19:10:51+01:00,"HADOOP-17088.Failed to load XInclude files with relative path. (#2097)
+
+
+Contributed by Yushi Hayasaka.",['3e8b1e74268994d244eeeb6400c6144edbbb486f'],2.0,2.0,43.0,1.0,4442.0,HADOOP-17088,Failed to load XInclude files with relative path.,Bug,Resolved,Fixed
+6b5d9e2334bec199518e580d4a2863c26518efcb,Xiaoyu Yao,2020-09-21 12:41:06-07:00,GitHub,2020-09-21 12:41:06-07:00,HADOOP-17259. Allow SSLFactory fallback to input config if ssl-*.xml … (#2301),['c8c1cc43d35daa1469ccaf54f2172daa2da94be3'],2.0,2.0,71.0,4.0,636.0,HADOOP-17259,Allow SSLFactory fallback to input config if ssl-*.xml fail to load from classpath,Improvement,Resolved,Fixed
+75d10f849981f467dcf4ef16d0d0d3270e5b9885,Karen Coppage,2020-09-29 17:06:50+02:00,GitHub,2020-09-29 16:06:50+01:00,"HADOOP-17267. Add debug-level logs in Filesystem.close() (#2321)
+
+
+When a filesystem is closed, the FileSystem log will, at debug level,
+log the method calling close/closeAll.
+
+At trace level: the full calling stack.
+
+Contributed by Karen Coppage.",['143bdd41885a43c7bc6e11f0c0d6e5820768aa2c'],1.0,1.0,19.0,1.0,2074.0,HADOOP-17267,Add debug-level logs in Filesystem#close,Improvement,Resolved,Fixed
+4c5ad57818a7e894b5bf430358e02a0bb8618769,Xiaoyu Yao,2020-09-29 20:15:27-07:00,GitHub,2020-09-29 20:15:27-07:00,HADOOP-17284. Support BCFKS keystores for Hadoop Credential Provider. (#2334),['a89ca56a1b0eb949f56e7c6c5c25fdf87914a02f'],11.0,9.0,491.0,190.0,857.0,HADOOP-17284,Support BCFKS keystores for Hadoop Credential Provider,Improvement,Resolved,Fixed
+a490d87eb7605125049d20bc15dbe0e5067150ab,He Xiaoqiao,2020-09-30 11:35:24+08:00,He Xiaoqiao,2020-09-30 12:12:52+08:00,HADOOP-17280. Service-user cost shouldn't be accumulated to totalDecayedCallCost and totalRawCallCost. Contributed by Jinglun.,['4c5ad57818a7e894b5bf430358e02a0bb8618769'],4.0,2.0,111.0,9.0,1130.0,HADOOP-17280,Service-user cost shouldn't be accumulated to totalDecayedCallCost and totalRawCallCost.,Improvement,Resolved,Fixed
+d68d2a5c1ed53bcab546f6f870cf2084d22ca498,maobaolong,2020-10-01 05:22:55+08:00,GitHub,2020-09-30 14:22:55-07:00,HADOOP-17287. Support new Instance by non default constructor by ReflectionUtils (#2341),['a490d87eb7605125049d20bc15dbe0e5067150ab'],2.0,2.0,51.0,2.0,441.0,HADOOP-17287,Support new Instance by non default constructor by ReflectionUtils,Improvement,Resolved,Fixed
+d0d10f7e8f998779ef11182c0f5c60fc8f729b39,Fei Hui,2020-10-04 01:02:28+08:00,GitHub,2020-10-04 02:02:28+09:00,HADOOP-17276. Extend CallerContext to make it include many items (#2327),['18fa4397e6dc7663bcc7c7309126f45eb8d3fa17'],8.0,7.0,166.0,10.0,1957.0,HADOOP-17276,Extend CallerContext to make it include many items,Improvement,Resolved,Fixed
+c9ea344f98497b0f3e524bb3406f4ef8bc00fc89,Liang-Chi Hsieh,2020-10-06 09:07:54-07:00,GitHub,2020-10-06 17:07:54+01:00,"HADOOP-17125. Use snappy-java in SnappyCodec (#2297)
+
+
+This switches the SnappyCodec to use the java-snappy codec, rather than the native one. 
+
+To use the codec, snappy-java.jar (from org.xerial.snappy) needs to be on the classpath.
+
+This comesin as an avro dependency,  so it is already on the hadoop-common classpath,
+as well as in hadoop-common/lib.
+The version used is now managed in the hadoop-project POM; initially 1.1.7.7
+
+Contributed by DB Tsai and Liang-Chi Hsieh",['4347a5c9556e5399f5df059879749fb9df72e718'],22.0,10.0,92.0,147.0,2241.0,HADOOP-17125,Using snappy-java in SnappyCodec,New Feature,Resolved,Fixed
+82522d60fb545b81a70b36455c89694b544e391c,Mukund Thakur,2020-10-07 18:17:06+05:18,GitHub,2020-10-07 13:59:06+01:00,"HADOOP-17281 Implement FileSystem.listStatusIterator() in S3AFileSystem (#2354)
+
+
+Contains HADOOP-17300: FileSystem.DirListingIterator.next() call should 
+return NoSuchElementException
+
+Contributed by Mukund Thakur",['16aea11c945c84936984e80241dcdd4a0d4b7f58'],7.0,6.0,173.0,2.0,6959.0,HADOOP-17281,Implement FileSystem.listStatusIterator() in S3AFileSystem,Sub-task,Resolved,Fixed
+52db86b0bb4d2fa644362c23a6566eec1cb5200b,Jinglun,2020-10-08 17:36:07+08:00,GitHub,2020-10-08 10:36:07+01:00,"HADOOP-17021. Add concat fs command (#1993)
+
+
+Contributed by Jinglun",['735e85a1d2036585075b81d1fb2fd302e89eb363'],4.0,3.0,259.0,0.0,265.0,HADOOP-17021,Add concat fs command,Improvement,Resolved,Fixed
+59f01a548e457a535aa8b5035142c9fbdc34b5b4,Gabor Bota,2020-10-13 17:17:44+02:00,GitHub,2020-10-13 16:17:44+01:00,"HADOOP-16878. FileUtil.copy() to throw IOException if the source and destination are the same
+
+
+Contributed by Gabor Bota.",['0507c4160f6112117a978ac5021ec36c0e16913e'],3.0,3.0,37.0,1.0,3774.0,HADOOP-16878,FileUtil.copy() to throw IOException if the source and destination are the same,Improvement,Reopened,
+1e3a6efcef2924a7966c44ca63476c853956691d,Ayush Saxena,2020-10-17 11:49:18+05:18,GitHub,2020-10-17 11:49:18+05:18,HADOOP-17288. Use shaded guava from thirdparty. (#2342). Contributed by Ayush Saxena.,['740a2c46353f8005dbed6f5bc15f21acfc4a6a23'],1764.0,1728.0,2709.0,2709.0,688162.0,HADOOP-17288,Use shaded guava from thirdparty,Sub-task,Resolved,Fixed
+42e7e0380f923b3ff0f3dda89e14ceca9867e22a,hemanthboyina,2020-10-18 18:25:46+05:18,hemanthboyina,2020-10-18 18:25:46+05:18,HADOOP-17144. Update Hadoop's lz4 to v1.9.2. Contributed by Hemanth Boyina.,['1e3a6efcef2924a7966c44ca63476c853956691d'],9.0,1.0,9.0,2.0,163.0,HADOOP-17144,Update Hadoop's lz4 to v1.9.2,Improvement,Resolved,Fixed
+4c651103f2ade3795c3810d1f33f8b45f87f3057,Ayush Saxena,2020-10-19 10:42:18+05:18,GitHub,2020-10-19 10:42:18+05:18,HADOOP-17310. Touch command with -c option is broken. (#2393). Contributed by Ayush Saxena.,['2e8cafac3b071fe5b943542827fd8a496b137fa9'],2.0,2.0,13.0,3.0,287.0,HADOOP-17310,Touch command with -c  option is broken,Bug,Resolved,Fixed
+7b4359657f8772d1bc34d73ea1115b97627a7840,Akira Ajisaka,2020-10-20 23:25:24+09:00,GitHub,2020-10-20 23:25:24+09:00,"HADOOP-17315. Use shaded guava in ClientCache.java (#2398)
+
+Added checkstyle rules to warn guava imports",['30f06e0c742806c7b9edf00a92c98b1e9cfcb0e1'],2.0,1.0,1.0,1.0,63.0,HADOOP-17315,Use shaded guava in ClientCache.java,Bug,Resolved,Fixed
+6a9ceedfb3ee7c2f66a44083fb8e68cca508e207,Akira Ajisaka,2020-10-23 03:15:45+09:00,GitHub,2020-10-23 03:15:45+09:00,HADOOP-17175. [JDK 11] Fix javadoc errors in hadoop-common module. (#2397),['7435604a91a49f5c5717083fbaee74dd8ec1c426'],12.0,11.0,87.0,73.0,2296.0,HADOOP-17175,[JDK11] Fix javadoc errors in hadoop-common module,Sub-task,Resolved,Fixed
+d259928035fa6de20986a5afaf5d2569650ef6a8,Vinayakumar B,2020-10-23 11:18:02+05:18,GitHub,2020-10-23 11:18:02+05:18,HADOOP-17306. RawLocalFileSystem's lastModifiedTime() looses milli seconds in JDK < 10.b09 (#2387),['da1b6e3cc286db00b385f3280627d2b2063b4e59'],2.0,2.0,32.0,3.0,973.0,HADOOP-17306,RawLocalFileSystem's lastModifiedTime() loses milli seconds in JDK < 10.b09,Bug,Reopened,
+872440610f066d4b12c9f93c05477848a260b21f,Ayush Saxena,2020-10-26 21:55:37+05:18,GitHub,2020-10-27 01:37:37+09:00,HADOOP-17328. LazyPersist Overwrite fails in direct write mode. (#2413),['12c908c827c80ea37ed5207a65831d0b699c8381'],2.0,2.0,27.0,1.0,957.0,HADOOP-17328,LazyPersist Overwrite fails in direct write mode,Bug,Resolved,Fixed
+7f5caca04cb8e5dab8410ef64daa0fe799e389fd,Akira Ajisaka,2020-11-04 04:20:23+09:00,GitHub,2020-11-03 11:20:23-08:00,"HADOOP-17255. JavaKeyStoreProvider fails to create a new key if the keystore is HDFS. (#2291)
+
+Reviewed-by: Steve Loughran <stevel@cloudera.com>
+Reviewed-by: Wei-Chiu Chuang <weichiu@apache.org>",['e580280a8b00daf250bae96a50fe46899791eabf'],1.0,1.0,4.0,4.0,548.0,HADOOP-17255,JavaKeyStoreProvider fails to create a new key if the keystore is HDFS,Bug,Reopened,
+af389d989770c4218c24e640f572bc7492f7d4b3,Eric Badger,2020-11-05 21:46:14+00:00,Eric Badger,2020-11-05 21:46:14+00:00,"HADOOP-17342. Creating a token identifier should not do kerberos name
+resolution. Contributed by Jim Brennan.",['638f1fc2b617dd4202d1ed09541d95b21415e957'],1.0,1.0,1.0,1.0,203.0,HADOOP-17342,Creating a token identifier should not do kerberos name resolution,Improvement,Resolved,Fixed
+ae7b00a9988d4d96f5ca545dca05211ce2e329c6,Steve Loughran,2020-11-07 04:13:24+00:00,GitHub,2020-11-07 09:31:24+05:18,HADOOP-17340. TestLdapGroupsMapping failing -string mismatch in exception validation. (#2427). Contributed by Steve Loughran.,['6eacaffeea21e7e9286497ee17f89fd939d2eead'],1.0,1.0,6.0,4.0,312.0,HADOOP-17340,TestLdapGroupsMapping failing -string mismatch in exception validation,Bug,Resolved,Fixed
+1ea3f74246294c280a2ccb0ff3e90b5721c5f0e2,Ahmed Hussein,2020-11-09 14:05:08-06:00,GitHub,2020-11-09 14:05:08-06:00,"HADOOP-17360. Log the remote address for authentication success (#2441)
+
+Co-authored-by: ahussein <ahmed.hussein@verizonmedia.com>",['ae7b00a9988d4d96f5ca545dca05211ce2e329c6'],1.0,1.0,1.0,1.0,2755.0,HADOOP-17360,Log the remote address for authentication success,Bug,Resolved,Fixed
+45434c93e865386de8c5f4036e795a3362557d56,Stephen Jung,2020-11-10 11:38:22-08:00,GitHub,2020-11-10 11:38:22-08:00,HADOOP-17096. Fix ZStandardCompressor input buffer offset (#2104). Contributed by Stephen Jung (Stripe).,['61f8c5767e8d72bce6fd560c332ff8fc68d05ad2'],2.0,1.0,2.0,2.0,210.0,HADOOP-17096,Fix ZStandardCompressor input buffer offset,Bug,Resolved,Fixed
+71071e5c0fcaf73a3989000dbc60fa214a317da1,Ahmed Hussein,2020-11-11 14:39:03-06:00,GitHub,2020-11-11 12:39:03-08:00,"HADOOP-17358. Improve excessive reloading of Configurations (#2436)
+
+Co-authored-by: ahussein <ahmed.hussein@verizonmedia.com>",['188ebb5a9bb63dcd708b3f3598cf996d54cd77f6'],2.0,2.0,27.0,10.0,2347.0,HADOOP-17358,Improve excessive reloading of Configurations,Bug,Resolved,Fixed
+6f10a0506f89f9649a1d0f20200089908d2163c2,"Doroszlai, Attila",2020-11-11 22:20:09+01:00,GitHub,2020-11-11 21:20:09+00:00,"HADOOP-17365. Contract test for renaming over existing file is too lenient (#2447)
+
+
+Contributed by Attila Doroszlai.",['71071e5c0fcaf73a3989000dbc60fa214a317da1'],1.0,1.0,27.0,13.0,267.0,HADOOP-17365,Contract test for renaming over existing file is too lenient,Bug,Resolved,Fixed
+5ce18101cb7616bde7767f0b0501d9d80704661a,Ahmed Hussein,2020-11-12 13:13:12-06:00,GitHub,2020-11-12 13:13:12-06:00,"HADOOP-17346. Fair call queue is defeated by abusive service principals (#2431)
+
+Co-authored-by: ahussein <ahmed.hussein@verizonmedia.com>",['fc961b63d145ef17fb45fa8a2bcb1c3318b8bff7'],10.0,10.0,164.0,27.0,7259.0,HADOOP-17346,Fair call queue is defeated by abusive service principals,Bug,Resolved,Fixed
+ebe1d1fbf7a7549078e5a468080513db09b6416f,Ahmed Hussein,2020-11-13 14:22:35-06:00,GitHub,2020-11-13 14:22:35-06:00,HADOOP-17362. reduce RPC calls doing ls on HAR file (#2444). Contributed by Daryn Sharp and Ahmed Hussein,['f56cd88d7d9381d13329d25bb4f367e5378b6b5b'],3.0,3.0,38.0,40.0,1414.0,HADOOP-17362,Doing hadoop ls on Har file triggers too many RPC calls,Bug,Resolved,Fixed
+e3c08f285a6ac02f51ddf0007db76fc3da7ec372,Steve Loughran,2020-11-18 12:15:52+00:00,Steve Loughran,2020-11-18 12:18:11+00:00,"HADOOP-17244. S3A directory delete tombstones dir markers prematurely. (#2310)
+
+This fixes the S3Guard/Directory Marker Retention integration so that when
+fs.s3a.directory.marker.retention=keep, failures during multipart delete
+are handled correctly, as are incremental deletes during
+directory tree operations.
+
+In both cases, when a directory marker with children is deleted from
+S3, the directory entry in S3Guard is not deleted, because it is still
+critical to representing the structure of the store.
+
+Contributed by Steve Loughran.
+
+Change-Id: I4ca133a23ea582cd42ec35dbf2dc85b286297d2f",['425996eb4a18ae0177985cbc8772298c0a39083c'],20.0,19.0,1041.0,433.0,9396.0,HADOOP-17244,HADOOP-17244. S3A directory delete tombstones dir markers prematurely.,Sub-task,Resolved,Fixed
+34aa6137bd890a565ace26be278a50f81b3dda20,Liang-Chi Hsieh,2020-11-18 12:03:25-08:00,GitHub,2020-11-18 12:03:25-08:00,"HADOOP-17292. Using lz4-java in Lz4Codec (#2350)
+
+Contributed by Liang-Chi Hsieh.",['0d3155a687fbffef89940e13867c82a84332a9f5'],20.0,8.0,114.0,123.0,2022.0,HADOOP-17292,Using lz4-java in Lz4Codec,New Feature,Resolved,Fixed
+07050339e0a41a7d4b89b852ffdd7aa315a9184b,Ahmed Hussein,2020-11-19 15:37:14-05:00,GitHub,2020-11-19 14:37:14-06:00,HADOOP-17367. Add InetAddress api to ProxyUsers.authorize (#2449). Contributed by Daryn Sharp and Ahmed Hussein,['34aa6137bd890a565ace26be278a50f81b3dda20'],9.0,8.0,203.0,146.0,1118.0,HADOOP-17367,Add InetAddress api to ProxyUsers.authorize,Improvement,Resolved,Fixed
+ac7045b75f3d5aa9948494f7f98fc2dfc9399507,Steve Loughran,2020-11-25 14:31:02+00:00,GitHub,2020-11-25 14:31:02+00:00,"HADOOP-17313. FileSystem.get to support slow-to-instantiate FS clients. (#2396)
+
+
+This adds a semaphore to throttle the number of FileSystem instances which
+can be created simultaneously, set in ""fs.creation.parallel.count"".
+
+This is designed to reduce the impact of many threads in an application calling
+FileSystem.get() on a filesystem which takes time to instantiate -for example
+to an object where HTTPS connections are set up during initialization.
+Many threads trying to do this may create spurious delays by conflicting
+for access to synchronized blocks, when simply limiting the parallelism
+diminishes the conflict, so speeds up all threads trying to access
+the store.
+
+The default value, 64, is larger than is likely to deliver any speedup -but
+it does mean that there should be no adverse effects from the change.
+
+If a service appears to be blocking on all threads initializing connections to
+abfs, s3a or store, try a smaller (possibly significantly smaller) value.
+
+Contributed by Steve Loughran.",['3193d8c7938741e154320756c444f77992083106'],4.0,3.0,276.0,33.0,2797.0,HADOOP-17313,FileSystem.get to support slow-to-instantiate FS clients,Sub-task,Resolved,Fixed
+f94e927bfbeab5f5c4f8d4d75218eee4caa6c6c7,Ahmed Hussein,2020-12-03 10:55:51-06:00,GitHub,2020-12-03 10:55:51-06:00,HADOOP-17392. Remote exception messages should not include the exception class (#2486). Contributed by Daryn Sharp and Ahmed Hussein,['9170eb566b173472d9b71141142b31e5824357fb'],4.0,4.0,19.0,9.0,5464.0,HADOOP-17392,Remote exception messages should not include the exception class,Improvement,Resolved,Fixed
+db73e994edac5dee86d38ba891d8cd13be50773d,Attila Magyar,2020-12-03 12:01:54-08:00,Wei-Chiu Chuang,2020-12-03 12:05:20-08:00,"HADOOP-16881. KerberosAuthentication does not disconnect HttpURLConnection leading to CLOSE_WAIT cnxns. Contributed by Attila Magyar.
+
+Signed-off-by: Wei-Chiu Chuang <weichiu@apache.org>",['f94e927bfbeab5f5c4f8d4d75218eee4caa6c6c7'],2.0,2.0,11.0,2.0,504.0,HADOOP-16881,KerberosAuthentication does not disconnect HttpURLConnection leading to CLOSE_WAIT cnxns,Bug,Resolved,Fixed
+6de1a8eb678496393b625f430084a6c64e24b804,Jim Brennan,2020-12-11 20:16:56+00:00,Jim Brennan,2020-12-11 20:16:56+00:00,"HADOOP-13571. ServerSocketUtil.getPort() should use loopback address, not 0.0.0.0. Contributed by Eric Badger",['be35fa186cc0c5c1f90028a9383851d47791bf04'],1.0,1.0,3.0,1.0,73.0,HADOOP-13571,"ServerSocketUtil.getPort() should use loopback address, not 0.0.0.0",Bug,Resolved,Fixed
+99d08a19ba5d0464da1619a83db90c2f4b84a74b,Steve Loughran,2020-12-31 11:52:42+00:00,GitHub,2020-12-31 11:52:42+00:00,"HADOOP-17450. Add Public IOStatistics API. (#2577)
+
+
+This is the API and implementation classes of HADOOP-16830,
+which allows callers to query IO object instances
+(filesystems, streams, remote iterators, ...) and other classes
+for statistics on their I/O Usage: operation count and min/max/mean
+durations.
+
+New Packages
+
+org.apache.hadoop.fs.statistics. 
+  Public API, including:
+    IOStatisticsSource
+    IOStatistics
+    IOStatisticsSnapshot (seralizable to java objects and json)
+    +helper classes for logging and integration
+    BufferedIOStatisticsInputStream
+       implements IOStatisticsSource and StreamCapabilities
+     BufferedIOStatisticsOutputStream
+       implements IOStatisticsSource, Syncable and StreamCapabilities
+       
+
+org.apache.hadoop.fs.statistics.impl
+  Implementation classes for internal use.
+
+org.apache.hadoop.util.functional
+  functional programming support for RemoteIterators and
+  other operations which raise IOEs; all wrapper classes
+  implement and propagate IOStatisticsSource
+    
+Contributed by Steve Loughran.",['fa4cf91b5750327ed67355c35f1ed0f10bb0100d'],73.0,71.0,9492.0,115.0,8327.0,HADOOP-17450,hadoop-common to add IOStatistics API,Sub-task,Resolved,Fixed
+66ee0a6df0dc0dd8242018153fd652a3206e73b5,Wei-Chiu Chuang,2021-01-04 09:43:58-08:00,GitHub,2021-01-04 09:43:58-08:00,HADOOP-17371. Bump Jetty to the latest version 9.4.34. Contributed by Wei-Chiu Chuang. (#2453),['2825d060cf902148eeecf2de1a1c3755b1b14389'],7.0,4.0,50.0,12.0,1297.0,HADOOP-17371,Bump Jetty to the latest version 9.4.35,Improvement,Resolved,Fixed
+b1abb10ea273b53896afbf766ea16a59138ce6e9,dgzdot,2021-01-06 05:09:41+08:00,GitHub,2021-01-05 21:09:41+00:00,"HADOOP-17430. Restore ability to set Text to empty byte array (#2545)
+
+
+
+Contributed by gaozhan.ding",['42eb9ff68e3786dce44a89e78d9a5dc3603ec2fc'],2.0,2.0,28.0,2.0,814.0,HADOOP-17430, Restore ability to set Text to empty byte array,Wish,Resolved,Fixed
+e306f594218e4de3d960ecb3cc8876cd03db8b10,Borislav Iordanov,2021-01-08 12:10:21-05:00,GitHub,2021-01-08 09:10:21-08:00,"HADOOP-16524. Reloading SSL keystore for both DataNode and NameNode (#2470)
+
+Co-authored-by: Borislav Iordanov <biordanov@apple.com>
+Signed-off-by: stack <stack@apache.org>",['41767599093f6a39e43be963336af24738616cb1'],7.0,7.0,703.0,194.0,2085.0,HADOOP-16524,Automatic keystore reloading for HttpServer2,Improvement,Resolved,Fixed
+77435a025e5ba2172dc0b5aaf2da9537c6a978ce,Ahmed Hussein,2021-01-08 13:10:09-06:00,GitHub,2021-01-08 13:10:09-06:00,HADOOP-17408. Optimize NetworkTopology sorting block locations. (#2601). Contributed by Ahmed Hussein and Daryn Sharp.,['e306f594218e4de3d960ecb3cc8876cd03db8b10'],2.0,2.0,36.0,44.0,1111.0,HADOOP-17408,Optimize NetworkTopology while sorting of block locations,Improvement,Resolved,Fixed
+0a6ddfa145b788c834098b9169ea880eec2b5b82,Mehakmeet Singh,2021-01-12 21:06:09+05:18,GitHub,2021-01-12 15:48:09+00:00,"HADOOP-17272. ABFS Streams to support IOStatistics API (#2604)
+
+
+
+Contributed by Mehakmeet Singh.",['0d7ac54510fbed8957d053546d606d5084e3e708'],10.0,10.0,444.0,201.0,1848.0,HADOOP-17272,ABFS Streams to  support IOStatistics API,Sub-task,Resolved,Fixed
+d3014e01f3538c6b161b48fa297ba8afeb002b30,Steve Loughran,2021-01-12 17:25:14+00:00,GitHub,2021-01-12 17:25:14+00:00,"HADOOP-17451. IOStatistics test failures in S3A code. (#2594)
+
+
+Caused by HADOOP-16380 and HADOOP-17271.
+
+Fixes tests which fail intermittently based on configs and
+in the case of the HugeFile tests, bulk runs with existing
+FS instances meant statistic probes sometimes ended up probing those
+of a previous FS.
+
+Contributed by Steve Loughran.",['0a6ddfa145b788c834098b9169ea880eec2b5b82'],7.0,7.0,80.0,62.0,2716.0,HADOOP-17451,Intermittent failure of S3A tests which make assertions on statistics/IOStatistics,Sub-task,Resolved,Fixed
+724edb035440780991e5f99e658fac9a2de79734,Steve Loughran,2021-01-12 17:25:14+00:00,Steve Loughran,2021-01-12 17:30:32+00:00,"HADOOP-17451. IOStatistics test failures in S3A code. (#2594)
+
+Caused by HADOOP-16830 and HADOOP-17271.
+
+Fixes tests which fail intermittently based on configs and
+in the case of the HugeFile tests, bulk runs with existing
+FS instances meant statistic probes sometimes ended up probing those
+of a previous FS.
+
+Contributed by Steve Loughran.
+
+Change-Id: I65ba3f44444e59d298df25ac5c8dc5a8781dfb7d",['05c9c2ed0259f313d0ef02a399608018a1896b90'],7.0,7.0,80.0,62.0,2716.0,HADOOP-17451,Intermittent failure of S3A tests which make assertions on statistics/IOStatistics,Sub-task,Resolved,Fixed
+97f843de3a9e86159be5f2bb0cdf6d1ffa0af71d,He Xiaoqiao,2021-01-16 14:06:56+08:00,He Xiaoqiao,2021-01-16 14:06:56+08:00,HADOOP-16947. Stale record should be remove when MutableRollingAverages generating aggregate data. Contributed by Haibin Huang.,['7743d40ac5b6fba73204feba22d2256d4e9d70f0'],4.0,4.0,129.0,8.0,517.0,HADOOP-16947,Stale record should be remove when MutableRollingAverages generating aggregate data.,Bug,Resolved,Fixed
+80c7404b519da8d7d69be4c01eb84dd2c08d80a5,Steve Loughran,2021-01-26 19:30:51+00:00,GitHub,2021-01-26 19:30:51+00:00,"HADOOP-17414. Magic committer files don't have the count of bytes written collected by spark (#2530)
+
+
+This needs SPARK-33739 in the matching spark branch in order to work
+
+Contributed by Steve Loughran.",['e2a7008d50d7cf2ec031c98a2b1da8075c48e0ec'],27.0,25.0,1380.0,108.0,10727.0,HADOOP-17414,Magic committer files don't have the count of bytes written collected by spark,Sub-task,Resolved,Fixed
+28cc912a5c18a4f06ef6b66a252f4d3905a6adc8,Steve Loughran,2021-01-27 16:39:29+00:00,GitHub,2021-01-27 16:39:29+00:00,"HADOOP-17493. Revert name of DELEGATION_TOKENS_ISSUED constant/statistic (#2649)
+
+
+Follow-on to HADOOP-16830/HADOOP-17271.
+
+Contributed by Steve Loughran.",['7c4ef42837955a531400005f824b27ca64c11cbd'],4.0,4.0,6.0,9.0,1485.0,HADOOP-17493,renaming S3A Statistic DELEGATION_TOKENS_ISSUED to DELEGATION_TOKEN_ISSUED broke tests downstream,Sub-task,Resolved,Fixed
+06e836cd57c1db55215222be439d2239dac069fc,He Xiaoqiao,2021-01-31 19:45:40+08:00,He Xiaoqiao,2021-01-31 19:45:40+08:00,HADOOP-17501. Fix logging typo in ShutdownHookManager. Contributed by Fengnan Li.,['ad483fd66e87a734ea985016e5dec409e1c72c99'],1.0,1.0,3.0,3.0,234.0,HADOOP-17501,Fix logging typo in ShutdownHookManager,Improvement,Resolved,Fixed
+1a205cc3adffa568c814a5241e041b08e2fcd3eb,Siyao Meng,2021-01-31 20:42:44-08:00,GitHub,2021-02-01 13:42:44+09:00,HADOOP-17424. Replace HTrace with No-Op tracer (#2645),['6fafdd76829a14a6b95a392c31b45ae1510bf4b6'],69.0,57.0,371.0,1701.0,28873.0,HADOOP-17424,Replace HTrace with No-Op tracer,Sub-task,Resolved,Fixed
+21a3fc3d2d773d000724dfccf8c7666fbfdefc8a,belugabehr,2021-02-01 12:40:01-05:00,GitHub,2021-02-01 09:40:01-08:00,HADOOP-17482: Remove Commons Logger from FileSystem Class (#2633),['b54134661b5dc96e13e0cecc0ab044eb0bb48ab6'],11.0,11.0,17.0,61.0,6376.0,HADOOP-17482,Remove Commons Logger from FileSystem Class,Improvement,Resolved,Fixed
+798df6d6991ca2be2137207aa4eb4d10a70d0e52,Steve Loughran,2021-02-10 10:28:59+00:00,GitHub,2021-02-10 10:28:59+00:00,"HADOOP-13327 Output Stream Specification. (#2587)
+
+
+This defines what output streams and especially those which implement
+Syncable are meant to do, and documents where implementations (HDFS; S3)
+don't. With tests.
+
+The file:// FileSystem now supports Syncable if an application calls
+FileSystem.setWriteChecksum(false) before creating a file -checksumming
+and Syncable.hsync() are incompatible.
+
+Contributed by Steve Loughran.",['a8bd516e39fa82eea2a42b8085f3171fb0e1a883'],33.0,25.0,459.0,94.0,9563.0,HADOOP-13327,Add OutputStream + Syncable to the Filesystem Specification,Sub-task,Resolved,Fixed
+78905d7e3f36d61b3c8ce0e6d757f74db850c436,Steve Loughran,2021-02-11 17:37:20+00:00,GitHub,2021-02-11 17:37:20+00:00,"HADOOP-16906. Abortable (#2684)
+
+
+Adds an Abortable.abort() interface for streams to enable output streams to be terminated; this
+is implemented by the S3A connector's output stream. It allows for commit protocols
+to be implemented which commit/abort work by writing to the final destination and
+using the abort() call to cancel any write which is not intended to be committed.
+Consult the specification document for information about the interface and its use.
+
+Contributed by Jungtaek Lim and Steve Loughran.",['98ca6afd177fff508eb22a4b6fc3ba8cfbf9ba17'],22.0,19.0,473.0,38.0,9139.0,HADOOP-16906,Add some Abortable.abort() interface for streams etc which can be terminated,Sub-task,Resolved,Fixed
+7b7c0019f4232055acd51880d6461f5cf14b54cc,Mike,2021-02-23 20:03:27+03:00,GitHub,2021-02-23 17:03:27+00:00,"HADOOP-17528. SFTP File System: close the connection pool when closing a FileSystem (#2701)
+
+
+Contributed by Mike Pryakhin.",['647d23b611f74c5b9536ef0902954b1f2da5d695'],2.0,2.0,41.0,1.0,826.0,HADOOP-17528,Not closing an SFTP File System instance prevents JVM from exiting. ,Bug,Resolved,Fixed
+ef7ab535c550cd094114ac0b05a7248d29ba0537,Haoze Wu,2021-03-06 08:26:16-05:00,GitHub,2021-03-06 22:26:16+09:00,HADOOP-17552. Change ipc.client.rpc-timeout.ms from 0 to 120000 by default to avoid potential hang. (#2727),['c6b30a59dd20db39f34db8ce61ec152d7a90dad6'],3.0,2.0,2.0,1.0,1644.0,HADOOP-17552,Change ipc.client.rpc-timeout.ms from 0 to 120000 by default to avoid potential hang,Improvement,Resolved,Fixed
+176bd88890cc698310be8ae9b03a2d899da9f352,Chao Sun,2021-03-09 12:01:29-08:00,GitHub,2021-03-09 20:01:29+00:00,"HADOOP-16080. hadoop-aws does not work with hadoop-client-api. (#2522) 
+
+
+Contributed by Chao Sun.
+
+(Cherry-picked via PR #2575)",['b2a565629dba125be5b330e84c313ba26b50e80f'],13.0,12.0,55.0,49.0,7670.0,HADOOP-16080,hadoop-aws does not work with hadoop-client-api,Bug,Resolved,Fixed
+b1dc6c40a0695fedd8269a2a30a74da43e1d0ae7,He Xiaoqiao,2021-03-14 18:09:50+08:00,He Xiaoqiao,2021-03-14 18:09:50+08:00,HADOOP-17585. Correct timestamp format in the docs for the touch command. Contributed by Stephen O'Donnell.,['970455c917c7c78838d932ab1ecd4fdce38ae679'],3.0,1.0,6.0,4.0,149.0,HADOOP-17585,Correct timestamp format in the docs for the touch command,Bug,Resolved,Fixed
+b503de23281273c645921fa1a89ef25cda9a8fe3,Xiaoyu Yao,2021-03-17 10:57:11-07:00,GitHub,2021-03-17 10:57:11-07:00,HADOOP-17578. Improve UGI debug log to help troubleshooting TokenCach… (#2762),['3e58d5611d2426f576e667ceccc5c8f64c9699e2'],2.0,2.0,20.0,4.0,1548.0,HADOOP-17578,Improve UGI debug log to help troubleshooting TokenCache related issues,Bug,Resolved,Fixed
+63eb289462e29675a5c6887310988c333412d7e2,Xiaoyu Yao,2021-03-22 21:53:45-07:00,GitHub,2021-03-23 10:11:45+05:18,"HADOOP-17598. Fix java doc issue introduced by HADOOP-17578. (#2802). Contributed by Xiaoyu Yao.
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>
+Signed-off-by: Ayush Saxena <ayushsaxena@apache.org>",['ede490d13182f0fd3831afe6db97e01917add5b4'],1.0,1.0,0.0,1.0,1479.0,HADOOP-17598,Fix java doc issue introduced by HADOOP-17578,Bug,Resolved,Fixed
+d8ec8ab9653f628fa6ed16baf4c9e7681266ae8f,Jack Jiang,2021-03-23 23:46:11+08:00,GitHub,2021-03-23 08:46:11-07:00,HADOOP-17599. Remove NULL checks before instanceof (#2804),['d77c7ab4e0604484ec3c48ac2acb32ea71a53d9a'],17.0,17.0,20.0,21.0,2085.0,HADOOP-17599,Remove NULL checks before instanceof,Improvement,Resolved,Fixed
+03cfc852791c14fad39db4e5b14104a276c08e59,Ayush Saxena,2021-03-24 02:24:26+05:18,GitHub,2021-03-24 02:24:26+05:18,"HADOOP-17531. DistCp: Reduce memory usage on copying huge directories. (#2732). Contributed by Ayush Saxena.
+
+Signed-off-by: Steve Loughran <stevel@apache.org>",['569e407f646cdb422e83fd81d7948979a5a3c805'],17.0,15.0,633.0,165.0,4684.0,HADOOP-17531,DistCp: Reduce memory usage on copying huge directories,Improvement,Resolved,Fixed
+af1f9f43ea709d6e3dbd66bf71c83e135004584a,Akira Ajisaka,2021-03-26 04:09:43+09:00,GitHub,2021-03-25 12:09:43-07:00,HADOOP-17133. Implement HttpServer2 metrics (#2145),['c5929c00a35a8e58bcf1c80d9d414c3cbdce4483'],6.0,5.0,260.0,0.0,2578.0,HADOOP-17133,Implement HttpServer2 metrics,Improvement,Resolved,Fixed
+f5c15572886eccfc766e628f45943543706ebf9e,Ayush Saxena,2021-03-27 02:49:41+05:18,GitHub,2021-03-27 02:49:41+05:18,"HADOOP-17531.Addendum: DistCp: Reduce memory usage on copying huge directories. (#2820). Contributed by Ayush Saxena.
+
+Signed-off-by: Steve Loughran <stevel@apache.org>",['1fed18bb2d8ac3dbaecc3feddded30bed918d556'],1.0,1.0,2.0,2.0,625.0,HADOOP-17531,DistCp: Reduce memory usage on copying huge directories,Improvement,Resolved,Fixed
+a2975d215371bc693363683338bfa42a0cd5b6d9,stack,2021-03-31 10:40:20-07:00,stack,2021-03-31 10:40:20-07:00,"HADOOP-16524. Automatic keystore reloading for HttpServer2
+Reapply of issue reverted first because it caused yarn failures and
+then again because the commit message was incorrectly formatted.",['5183aaeda2134ed1f4b5b74aa32864b593029f8c'],10.0,9.0,713.0,196.0,2665.0,HADOOP-16524,Automatic keystore reloading for HttpServer2,Improvement,Resolved,Fixed
+2c482fbacfcdfeeb6643ec753f9e8144269fac46,Borislav Iordanov,2021-03-31 10:45:15-07:00,stack,2021-03-31 10:46:35-07:00,"HADOOP-16524. Automatic keystore reloading for HttpServer2
+
+Reapply of issue reverted first because it caused yarn failures and
+then again because the commit message was incorrectly formatted
+(and yet again because of commit message format).
+
+Signed-off-by: stack <stack@apache.org>",['22961a615df5d4764e36e8d0d089ece9b2ecbab5'],10.0,9.0,713.0,196.0,2665.0,HADOOP-16524,Automatic keystore reloading for HttpServer2,Improvement,Resolved,Fixed
+478402cc740fa21123b2a332d3ac7e66170a5535,Brahma Reddy Battula,2021-04-02 09:44:00+05:18,Brahma Reddy Battula,2021-04-02 09:44:00+05:18,HADOOP-17610. DelegationTokenAuthenticator prints token information. Contributed by  Ravuri Sushma sree.,['ed74479ea56ba2113d40b32f28be5c963f2928fa'],1.0,1.0,2.0,2.0,231.0,HADOOP-17610,DelegationTokenAuthenticator prints token information,Bug,Resolved,Fixed
+bc7689abf5723fb6ec763266227801636105f5a1,Brahma Reddy Battula,2021-04-02 09:51:50+05:18,Brahma Reddy Battula,2021-04-02 09:51:50+05:18,HADOOP-17587. Kinit with keytab should not display the keytab file's full path in any logs. Contributed by  Ravuri Sushma sree.,['478402cc740fa21123b2a332d3ac7e66170a5535'],1.0,1.0,4.0,3.0,1480.0,HADOOP-17587,Kinit with keytab should not display the keytab file's full path in any logs,Bug,Resolved,Fixed
+5eaa1b7230b3cfcdeb595135c57b0d015274606c,zhuqi,2021-04-04 17:22:03+08:00,GitHub,2021-04-04 14:40:03+05:18,"HADOOP-17619: Fix DelegationTokenRenewer#updateRenewalTime java doc error. (#2846). Contributed by Qi Zhu.
+
+Signed-off-by: Ayush Saxena <ayushsaxena@apache.org>",['96e410a1275283a0f5f4b91157e3d0e75615b5a3'],1.0,1.0,1.0,1.0,182.0,HADOOP-17619,Fix DelegationTokenRenewer#updateRenewalTime java doc error.,Bug,Resolved,Fixed
+3f2682b92b540be3ce15642ab8be463df87a4e4e,Viraj Jasani,2021-04-06 09:57:10+05:18,GitHub,2021-04-06 13:39:10+09:00,"HADOOP-17622. Avoid usage of deprecated IOUtils#cleanup API. (#2862)
+
+Signed-off-by: Takanobu Asanuma <tasanuma@apache.org>",['26b8f678b2af98a5812c2d116e724159e37c72dd'],64.0,64.0,102.0,99.0,30434.0,HADOOP-17622,Avoid usage of deprecated IOUtils#cleanup API,Task,Resolved,Fixed
+e86050fae52807f985896205895ca87da1aed719,"Boyina, Hemanth Kumar",2021-04-06 17:54:10+05:18,"Boyina, Hemanth Kumar",2021-04-06 17:54:10+05:18,HADOOP-17588. CryptoInputStream#close() should be syncronized. Contributed by RenukaPrasad C,['36014b8282579ac3d89b62a05586206fb6e0adcf'],1.0,1.0,1.0,1.0,641.0,HADOOP-17588,CryptoInputStream#close() should be synchronized,Bug,Resolved,Fixed
+3a89471c36678d3f663528ad599d59d8b63ae9cd,He Xiaoqiao,2021-04-07 12:18:23+08:00,He Xiaoqiao,2021-04-07 12:18:23+08:00,HADOOP-17613. Log not flushed fully when daemon shutdown. Contributed by Renukaprasad C.,['42ddb5c6fedf78ec6c183b1b66380dc6ef06ab7c'],1.0,1.0,2.0,0.0,720.0,HADOOP-17613,Log not flushed fully when daemon shutdown,Improvement,Resolved,Fixed
+156ecc89be3ae1f42bde9c22ab5ba96cf60df3c6,Akira Ajisaka,2021-04-13 17:08:49+09:00,GitHub,2021-04-13 17:08:49+09:00,"HADOOP-17630. [JDK 15] TestPrintableString fails due to Unicode 13.0 support. (#2890)
+
+Reviewed-by: Wei-Chiu Chuang <weichiu@apache.org>",['82462739f82a936a57223dd2bb4d8b71bb257ed9'],1.0,1.0,2.0,2.0,40.0,HADOOP-17630,[JDK 15] TestPrintableString fails due to Unicode 13.0 support,Sub-task,Resolved,Fixed
+9179638017439ce08c4de8414361304628eb64f4,Viraj Jasani,2021-04-15 14:22:46+05:18,GitHub,2021-04-15 18:04:46+09:00,"HADOOP-17524. Remove EventCounter and Log counters from JVM Metrics (#2909)
+
+Reviewed-by: Duo Zhang <zhangduo@apache.org>
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['ba3bc53f4e3277618e5b9c5c440b8a997e40ed32'],4.0,4.0,0.0,147.0,468.0,HADOOP-17524,Remove EventCounter and Log counters from JVM Metrics,Sub-task,Resolved,Fixed
+c4c0683dff577a91ca978939e182ec0fee65b7c3,Vinayakumar B,2021-04-22 00:50:03+05:18,GitHub,2021-04-22 00:50:03+05:18,HADOOP-17505. public interface GroupMappingServiceProvider needs default impl for getGroupsSet() (#2661). Contributed by Vinayakumar B.,['5221322b962db2ea95fd422e6fbf6ca4f4009d9e'],1.0,1.0,5.0,1.0,19.0,HADOOP-17505,public interface GroupMappingServiceProvider needs default impl for getGroupsSet() ,Bug,Resolved,Fixed
+6085f09db565724c00528e6252f40ada8a5ad819,Mehakmeet Singh,2021-04-23 14:46:31+05:18,GitHub,2021-04-23 10:28:31+01:00,"HADOOP-17471. ABFS to collect IOStatistics (#2731)
+
+
+The ABFS Filesystem and its input and output streams now implement
+the IOStatisticSource interface and provide IOStatistics on
+their interactions with Azure Storage.
+
+This includes the min/max/mean durations of all REST API calls.
+
+Contributed by Mehakmeet Singh <mehakmeet.singh@cloudera.com>",['dff95c5eca1c0d9a43b5734f93320fa51aee63da'],14.0,14.0,461.0,160.0,3338.0,HADOOP-17471,ABFS to collect IOStatistics,Sub-task,Resolved,Fixed
+027c8fb257eb5144a4cee42341bf6b774c0fd8d1,Steve Loughran,2021-04-23 18:44:41+01:00,GitHub,2021-04-23 18:44:41+01:00,"HADOOP-17597. Optionally downgrade on S3A Syncable calls (#2801)
+
+
+Followup to HADOOP-13327, which changed S3A output stream hsync/hflush calls
+to raise an exception.
+
+Adds a new option fs.s3a.downgrade.syncable.exceptions
+
+When true, calls to Syncable hsync/hflush on S3A output streams will
+log once at warn (for entire process life, not just the stream), then
+increment IOStats with the relevant operation counter
+
+With the downgrade option false (default)
+* IOStats are incremented
+* The UnsupportedOperationException current raised includes a link to the
+  JIRA.
+
+Contributed by Steve Loughran.",['6800b21e3b07168fd5820133d20858c6ca4bdf59'],13.0,12.0,464.0,69.0,6758.0,HADOOP-17597,Add option to downgrade S3A rejection of Syncable to warning,Sub-task,Resolved,Fixed
+e571025f5b371ade25d1457f0186ba656bb71c5f,kishendas,2021-05-04 01:20:56-07:00,GitHub,2021-05-04 01:20:56-07:00,"HADOOP-17657: implement StreamCapabilities in SequenceFile.Writer and fall back to flush, if hflush is not supported (#2949)
+
+
+Co-authored-by: Kishen Das <kishen@cloudera.com>
+Reviewed-by: Steve Loughran <stevel@apache.org>",['62bcc79a2c5bc5a6808edee142100672eebb5035'],2.0,2.0,44.0,1.0,3204.0,HADOOP-17657,SequenceFile.Writer should implement StreamCapabilities,Bug,Resolved,Fixed
+0d78d73973cf8643c4120678ebeea9cde473a2c4,Istvan Fajth,2021-05-04 12:33:59+02:00,GitHub,2021-05-04 11:33:59+01:00,HADOOP-17675. LdapGroupsMapping$LdapSslSocketFactory ClassNotFoundException (#2965),['68425eb469560d08b779e240dd74720328556b22'],1.0,1.0,23.0,1.0,689.0,HADOOP-17675,LdapGroupsMapping$LdapSslSocketFactory ClassNotFoundException,Improvement,Resolved,Fixed
+b93e448f9aa66689f1ce5059f6cdce8add130457,Viraj Jasani,2021-05-06 01:10:02+05:18,GitHub,2021-05-06 04:52:02+09:00,"HADOOP-11616. Remove workaround for Curator's ChildReaper requiring Guava 15+ (#2973)
+
+Reviewed-by: Wei-Chiu Chuang <weichiu@apache.org>
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['76c69c39d97c1fdeee61dc5c3db52fe455be8ddc'],2.0,2.0,0.0,443.0,0.0,HADOOP-11616,Remove workaround for Curator's ChildReaper requiring Guava 15+,Improvement,Resolved,Fixed
+f40e3eb0590f85bb42d2471992bf5d524628fdd6,hchaverr,2021-05-06 16:40:45-07:00,Konstantin V Shvachko,2021-05-06 16:42:27-07:00,HADOOP-17680. Allow ProtobufRpcEngine to be extensible (#2905) Contributed by Hector Chaverri.,['7cb7b8adc137239682e6189d1663b6b868757938'],2.0,2.0,48.0,12.0,888.0,HADOOP-17680,Allow ProtobufRpcEngine to be extensible,Improvement,Resolved,Fixed
+6d6766bc22d5343ad8dbbbf1b0f007ced7072c40,hexiaoqiao,2021-05-10 14:11:36+08:00,hexiaoqiao,2021-05-10 14:11:36+08:00,HADOOP-17690. Improve the log for The DecayRpcScheduler. Contributed by Bhavik Patel.,['7f93349ee74da5f35276b7535781714501ab2457'],1.0,1.0,8.0,11.0,821.0,HADOOP-17690,Improve the log for The DecayRpcScheduler ,Improvement,Resolved,Fixed
+91430889a54df9f04d354dd0177d3e6ee2e61562,Borislav Iordanov,2021-05-10 16:31:48-04:00,GitHub,2021-05-10 13:31:48-07:00,HADOOP-17665  Ignore missing keystore configuration in reloading mechanism,['8d5cc98b4271dc1dca2e69cb02e4ed87c16361ad'],3.0,2.0,65.0,27.0,1408.0,HADOOP-17665,Ignore missing keystore configuration in reloading mechanism ,Sub-task,Resolved,Fixed
+c80f07422f61b3da9034fc7a392e17f0a9144d84,Viraj Jasani,2021-05-12 06:52:01+05:18,GitHub,2021-05-12 10:34:01+09:00,"HADOOP-17686. Avoid potential NPE by using Path#getParentPath API in hadoop-huaweicloud (#2990)
+
+Signed-off-by: Takanobu Asanuma <tasanuma@apache.org>",['b944084b32268d4c259bde894a80207010b5c103'],2.0,2.0,29.0,6.0,1002.0,HADOOP-17686,Avoid potential NPE by using Path#getParentPath API in hadoop-huaweicloud,Bug,Resolved,Fixed
+29105ffb634ceb44a331ba65280d418544b902a6,dependabot[bot],2021-05-12 10:57:45+09:00,GitHub,2021-05-12 10:57:45+09:00,"HADOOP-17683. Update commons-io to 2.8.0 (#2974)
+
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+Co-authored-by: Akira Ajisaka <aajisaka@apache.org>
+Signed-off-by: Wei-Chiu Chuang <weichiu@apache.org>",['c80f07422f61b3da9034fc7a392e17f0a9144d84'],3.0,1.0,6.0,12.0,1174.0,HADOOP-17683,Update commons-io to 2.8.0,Task,Resolved,Fixed
+fdd20a3cf4cd9073f443b2bf07eef14f454d4c33,Viraj Jasani,2021-05-12 20:23:58+05:18,GitHub,2021-05-13 00:05:58+09:00,"HADOOP-17689. Avoid Potential NPE in org.apache.hadoop.fs (#3008)
+
+Signed-off-by: Takanobu Asanuma <tasanuma@apache.org>",['626be24c3ee1180fdfbd5dc968c70271770f21cc'],1.0,1.0,6.0,1.0,205.0,HADOOP-17689,Avoid Potential NPE in org.apache.hadoop.fs,Bug,Resolved,Fixed
+35ca1dcb9d9b14e31ad5d0e327a556cc0529f4ce,Akira Ajisaka,2021-05-13 14:22:25+09:00,GitHub,2021-05-13 14:22:25+09:00,"HADOOP-17685. Fix junit deprecation warnings in hadoop-common module. (#2983)
+
+Signed-off-by: Takanobu Asanuma <tasanuma@apache.org>",['fdd20a3cf4cd9073f443b2bf07eef14f454d4c33'],53.0,53.0,330.0,317.0,14407.0,HADOOP-17685,Fix junit deprecation warnings in hadoop-common module,Sub-task,Resolved,Fixed
+86729e130fb563d87917850a41bff3b0a886246f,Xiaoyu Yao,2021-05-18 10:11:36-07:00,GitHub,2021-05-18 10:11:36-07:00,HADOOP-17699. Remove hardcoded SunX509 usage from SSLFactory. (#3016),['110cda3de63e1e483c207085207f5d73d7b8adfd'],5.0,5.0,31.0,7.0,1073.0,HADOOP-17699,Remove hardcoded SunX509 usage from SSLFactory,Bug,Resolved,Fixed
+e4062ad027d84b4d7192ae77757a0373c4558390,Viraj Jasani,2021-05-20 21:05:04+05:18,GitHub,2021-05-20 10:47:04-05:00,"HADOOP-17115. Replace Guava Sets usage by Hadoop's own Sets in hadoop-common and hadoop-tools (#2985)
+
+Signed-off-by: Sean Busbey <busbey@apache.org>",['f7247922b7fd827489011aeff0a0d8dea7027b83'],21.0,16.0,392.0,17.0,4623.0,HADOOP-17115,Replace Guava Sets usage by Hadoop's own Sets in hadoop-common and hadoop-tools,Sub-task,Resolved,Fixed
+c70ee2d548feb9ec9a957e120045983dd21d9964,Viraj Jasani,2021-05-22 15:24:58+05:18,GitHub,2021-05-22 19:06:58+09:00,"HADOOP-17700. ExitUtil#halt info log should log HaltException (#3015)
+
+Reviewed-by: Steve Loughran <stevel@apache.org>
+Reviewed-by: Wei-Chiu Chuang <weichiu@apache.org>",['ad923ad5642b2b11357fbee4277f3435300a19c5'],1.0,1.0,1.0,2.0,173.0,HADOOP-17700,ExitUtil#halt info log should log HaltException,Bug,Resolved,Fixed
+c665ab02ed5c400b0c5e9e350686cd0e5b5e6972,Mehakmeet Singh,2021-05-24 17:20:11+05:18,GitHub,2021-05-24 13:02:11+01:00,"HADOOP-17670. S3AFS and ABFS to log IOStats at DEBUG mode or optionally at INFO level in close() (#2963)
+
+
+When the S3A and ABFS filesystems are closed,
+their IOStatistics are logged at debug in the log:
+
+org.apache.hadoop.fs.statistics.IOStatisticsLogging
+
+Set `fs.iostatistics.logging.level` to `info` for the statistics 
+to be logged at info. (also: `warn` or `error` for even higher
+log levels).
+
+
+Contributed by: Mehakmeet Singh",['1576f81dfe0156514ec06b6051e5df7928a294e2'],6.0,6.0,87.0,7.0,4992.0,HADOOP-17670,S3AFS and ABFS to log IOStats at DEBUG mode or optionally at INFO level in close(),Sub-task,Resolved,Fixed
+832a3c6a8918c73fa85518d5223df65b48f706e9,Steve Loughran,2021-05-25 10:25:41+01:00,GitHub,2021-05-25 10:25:41+01:00,"HADOOP-17511. Add audit/telemetry logging to S3A connector (#2807)
+
+
+The S3A connector supports
+""an auditor"", a plugin which is invoked
+at the start of every filesystem API call,
+and whose issued ""audit span"" provides a context
+for all REST operations against the S3 object store.
+
+The standard auditor sets the HTTP Referrer header
+on the requests with information about the API call,
+such as process ID, operation name, path,
+and even job ID.
+
+If the S3 bucket is configured to log requests, this
+information will be preserved there and so can be used
+to analyze and troubleshoot storage IO.
+
+Contributed by Steve Loughran.",['996d31f2dcec3a050d607d3b3264525c9f73a5d5'],134.0,127.0,11238.0,1151.0,33460.0,HADOOP-17511,Add an Audit plugin point for S3A auditing/context,Sub-task,Resolved,Fixed
+59fc4061cb619c85538277588f326469dfa08fb8,Viraj Jasani,2021-06-03 15:14:00+05:18,GitHub,2021-06-03 18:56:00+09:00,"HADOOP-17152. Provide Hadoop's own Lists utility to reduce dependency on Guava (#3061)
+
+Reviewed-by: Wei-Chiu Chuang <weichiu@apache.org>
+Signed-off-by: Takanobu Asanuma <tasanuma@apache.org>",['76d92eb2a22c71b5fcde88a9b4d2faec81a1cb9f'],2.0,2.0,337.0,0.0,177.0,HADOOP-17152,Implement wrapper for guava newArrayList and newLinkedList,Sub-task,Resolved,Fixed
+f4b24c68e76df40d55258fc5391baabfa9ac362d,Viraj Jasani,2021-06-07 09:42:09+05:18,GitHub,2021-06-07 13:24:09+09:00,"HADOOP-17743. Replace Guava Lists usage by Hadoop's own Lists in hadoop-common, hadoop-tools and cloud-storage projects (#3072)",['207c92753fc4782ebab3995eb8e4a2a62c744f27'],60.0,49.0,53.0,64.0,19726.0,HADOOP-17743,"Replace Guava Lists usage by Hadoop's own Lists in hadoop-common, hadoop-tools and cloud-storage projects",Task,Resolved,Fixed
+762a83e044b84250c6e2543e02f48136361ea3eb,Steve Loughran,2021-06-08 21:56:40+01:00,GitHub,2021-06-08 21:56:40+01:00,"HADOOP-17631. Configuration ${env.VAR:-FALLBACK} to eval FALLBACK when restrictSystemProps=true (#2977)
+
+
+Contributed by Steve Loughran.",['a2a0283c7be8eac641a256f06731cb6e4bab3b09'],2.0,2.0,106.0,29.0,4482.0,HADOOP-17631,Configuration ${env.VAR:-FALLBACK} should eval FALLBACK when restrictSystemProps=true ,Bug,Resolved,Fixed
+9e7c7ad129fcf466d9647e0672ecf7dd72213e72,Takanobu Asanuma,2021-06-17 09:58:47+09:00,GitHub,2021-06-17 09:58:47+09:00,"HADOOP-17760. Delete hadoop.ssl.enabled and dfs.https.enable from docs and core-default.xml (#3099)
+
+Reviewed-by: Ayush Saxena <ayushsaxena@apache.org>",['65623917377db409fa5ff813b9794f279511ce6e'],4.0,1.0,0.0,2.0,143.0,HADOOP-17760,Delete hadoop.ssl.enabled and dfs.https.enable from docs and core-default.xml,Bug,Resolved,Fixed
+20a4b1ae36483b5574c09516373557c764903c72,Akira Ajisaka,2021-06-30 19:06:29+09:00,GitHub,2021-06-30 03:06:29-07:00,HADOOP-17331. [JDK 16] TestDNS fails (#2884),['4cac6ec40528f6a1252de43599003291cd5fe5c3'],2.0,2.0,18.0,23.0,374.0,HADOOP-17331,[JDK 15] TestDNS fails by UncheckedIOException,Sub-task,Resolved,Fixed
+f639fbc29f7313ef6a54df4126bc56bee7c39f98,Rafal Wojdyla,2021-07-05 16:07:12-04:00,GitHub,2021-07-05 21:07:12+01:00,"HADOOP-17402. Add GCS config to the core-site (#2638)
+
+
+Contributed by Rafal Wojdyla",['93ad7c32f428b48d3499dfb3aa15249e8c5cc37d'],2.0,1.0,2.0,2.0,144.0,HADOOP-17402,Add GCS FS impl reference to core-default.xml,Improvement,Resolved,Fixed
+a5db6831bc674a24a3251cf1b20f22a4fd4fac9f,liangxs,2021-07-06 09:11:03+08:00,GitHub,2021-07-06 09:11:03+08:00,HADOOP-17749. Remove lock contention in SelectorPool of SocketIOWithTimeout (#3080),['f639fbc29f7313ef6a54df4126bc56bee7c39f98'],2.0,2.0,124.0,58.0,454.0,HADOOP-17749,Remove lock contention in SelectorPool of SocketIOWithTimeout,Improvement,Resolved,Fixed
+618c9218eeed2dc0388010e04349b3df8d6c5b70,Viraj Jasani,2021-07-08 12:21:40+05:18,GitHub,2021-07-08 16:03:40+09:00,"HADOOP-17788. Replace IOUtils#closeQuietly usages by Hadoop's own utility (#3171)
+
+Reviewed-by: Steve Loughran <stevel@apache.org>
+Reviewed-by: Akira Ajisaka <aajisaka@apache.org>
+Signed-off-by: Takanobu Asanuma <tasanuma@apache.org>",['b4c2647d0d7534a830bb90508cc30550e39c95dd'],39.0,39.0,130.0,215.0,20505.0,HADOOP-17788,Replace IOUtils#closeQuietly usages,Task,Resolved,Fixed
+ba325a8ada573291266c4d6447862072fdf88af5,Artem Smotrakov,2021-07-10 06:42:31+02:00,GitHub,2021-07-10 13:42:31+09:00,"HADOOP-17793. Better token validation (#3189)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['6ac5d8a1ed6ec3f6de7af3b8a79869830a4377ee'],3.0,3.0,8.0,7.0,2409.0,HADOOP-17793,Better token validation,Bug,Resolved,Fixed
+1dd03cc4b573270dc960117c3b6c74bb78215caa,Abhishek Das,2021-07-13 12:47:43-07:00,Konstantin V Shvachko,2021-07-13 18:11:50-07:00,HADOOP-17028. ViewFS should initialize mounted target filesystems lazily. Contributed by Abhishek Das (#2260),['ea90c5117dc4021e0c55ba12aa8d1657838714be'],11.0,11.0,379.0,72.0,5807.0,HADOOP-17028,ViewFS should initialize target filesystems lazily,Bug,Resolved,Fixed
+87e00001372a37199e1c8d595e237dfb4016853b,jianghuazhu,2021-07-14 15:15:02+08:00,GitHub,2021-07-14 00:15:02-07:00,"HADOOP-17672.Remove an invalid comment content in the FileContext class. (#2961)
+
+Co-authored-by: zhujianghua <zhujianghua@zhujianghuadeMacBook-Pro.local>
+Signed-off-by: Ayush Saxena <ayushsaxena@apache.org>",['1dd03cc4b573270dc960117c3b6c74bb78215caa'],1.0,1.0,0.0,5.0,1203.0,HADOOP-17672,Remove an invalid comment content in the FileContext class,Improvement,Resolved,Fixed
+df44178eb6d052b868cfb35adf40316b648f5a6c,Viraj Jasani,2021-07-14 17:16:32+05:18,GitHub,2021-07-14 20:58:32+09:00,"HADOOP-17795. Provide fallbacks for callqueue.impl and scheduler.impl (#3192)
+
+Reviewed-by: Wei-Chiu Chuang <weichiu@apache.org>
+Signed-off-by: Takanobu Asanuma <tasanuma@apache.org>",['87e00001372a37199e1c8d595e237dfb4016853b'],4.0,3.0,85.0,7.0,3338.0,HADOOP-17795,Provide fallbacks for callqueue.impl and scheduler.impl,Sub-task,Resolved,Fixed
+e1d00addb5b6d7240884536aaa57846af34a0dd5,Viraj Jasani,2021-07-20 12:13:49+05:18,GitHub,2021-07-19 23:55:49-07:00,"HADOOP-16290. Enable RpcMetrics units to be configurable (#3198)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['17bf2fcbc5142f7d860207c137fcf1d4d4edb699'],8.0,6.0,116.0,21.0,5467.0,HADOOP-16290,Enable RpcMetrics units to be configurable,Improvement,Resolved,Fixed
+3a52bfc5db1b13a71d5a5c6ee0cd689fb8b27895,Viraj Jasani,2021-07-23 09:56:55+05:18,GitHub,2021-07-23 12:38:55+08:00,HADOOP-17808. ipc.Client to set interrupt flag after catching InterruptedException (#3219),['98412ce2e1453308655d4f43e7f8c922960e6955'],1.0,1.0,7.0,1.0,1340.0,HADOOP-17808,ipc.Client not setting interrupt flag after catching InterruptedException,Task,Resolved,Fixed
+4c35466359dec71ac083ef3b6b5ceef83fa6121c,Akira Ajisaka,2021-07-24 14:48:25+09:00,GitHub,2021-07-24 14:48:25+09:00,"HADOOP-17317. [JDK 11] Upgrade dnsjava to remove illegal access warnings (#2442)
+
+Reviewed-by: Masatake Iwasaki <iwasakims@apache.org>",['05b6a1a06aff41322dd08ee8a0b4df04fd84d6da'],5.0,4.0,92.0,113.0,2306.0,HADOOP-17317,[JDK 11] Upgrade dnsjava to remove illegal access warnings,Bug,Resolved,Fixed
+f813554769606d59c23bcdc184d52249793d0f12,Mehakmeet Singh,2021-07-27 15:26:51+05:18,GitHub,2021-07-27 11:08:51+01:00,"HADOOP-13887. Support S3 client side encryption (S3-CSE) using AWS-SDK (#2706)
+
+
+This (big!) patch adds support for client side encryption in AWS S3,
+with keys managed by AWS-KMS.
+
+Read the documentation in encryption.md very, very carefully before
+use and consider it unstable.
+
+S3-CSE is enabled in the existing configuration option
+""fs.s3a.server-side-encryption-algorithm"":
+
+fs.s3a.server-side-encryption-algorithm=CSE-KMS
+fs.s3a.server-side-encryption.key=<KMS_KEY_ID>
+
+You cannot enable CSE and SSE in the same client, although
+you can still enable a default SSE option in the S3 console. 
+  
+* Filesystem list/get status operations subtract 16 bytes from the length
+  of all files >= 16 bytes long to compensate for the padding which CSE
+  adds.
+* The SDK always warns about the specific algorithm chosen being
+  deprecated. It is critical to use this algorithm for ranged
+  GET requests to work (i.e. random IO). Ignore.
+* Unencrypted files CANNOT BE READ.
+  The entire bucket SHOULD be encrypted with S3-CSE.
+* Uploading files may be a bit slower as blocks are now
+  written sequentially.
+* The Multipart Upload API is disabled when S3-CSE is active.
+
+Contributed by Mehakmeet Singh",['b038042ece550c34170d4958f84e91a1708761a5'],35.0,33.0,870.0,105.0,12460.0,HADOOP-13887,Encrypt S3A data client-side with AWS SDK (S3-CSE),Sub-task,Resolved,Fixed
+e001f8ee39f9f2b4e661c3fe3af65f53348bbabf,Viraj Jasani,2021-07-28 22:28:07+05:18,GitHub,2021-07-29 02:10:07+09:00,"HADOOP-17814. Provide fallbacks for identity/cost providers and backoff enable (#3230)
+
+Reviewed-by: Wei-Chiu Chuang <weichiu@apache.org>
+Signed-off-by: Takanobu Asanuma <tasanuma@apache.org>",['f2b6c03fc1929679170dfec04891f202181d88e8'],5.0,4.0,119.0,2.0,4209.0,HADOOP-17814,Provide fallbacks for identity/cost providers and backoff enable,Sub-task,Resolved,Fixed
+a218038960e905e6c9eae80e118575a7743cae7a,Petre Bogdan Stolojan,2021-07-30 19:42:08+01:00,GitHub,2021-07-30 19:42:08+01:00,"HADOOP-17139 Re-enable optimized copyFromLocal implementation in S3AFileSystem (#3101)
+
+
+This work
+* Defines the behavior of FileSystem.copyFromLocal in filesystem.md
+* Implements a high performance implementation of copyFromLocalOperation
+  for S3 
+* Adds a contract test for the operation: AbstractContractCopyFromLocalTest
+* Implements the contract tests for Local and S3A FileSystems
+
+Contributed by: Bogdan Stolojan",['6d77f3b6cd0516d36811635704789009f49a1dc5'],7.0,6.0,1065.0,180.0,5048.0,HADOOP-17139,Re-enable optimized copyFromLocal implementation in S3AFileSystem,Sub-task,Resolved,Fixed
+ee466d4b4002bc21b66f9c944263559a955c3055,Steve Loughran,2021-08-02 11:36:43+01:00,GitHub,2021-08-02 11:36:43+01:00,"HADOOP-17628. Distcp contract test is really slow with ABFS and S3A; timing out. (#3240)
+
+
+This patch cuts down the size of directory trees used for
+distcp contract tests against object stores, so making
+them much faster against distant/slow stores.
+
+On abfs, the test only runs with -Dscale (as was the case for s3a already),
+and has the larger scale test timeout.
+
+After every test case, the FileSystem IOStatistics are logged,
+to provide information about what IO is taking place and
+what it's performance is.
+
+There are some test cases which upload files of 1+ MiB; you can
+increase the size of the upload in the option
+""scale.test.distcp.file.size.kb"" 
+Set it to zero and the large file tests are skipped.
+
+Contributed by Steve Loughran.",['efb3fa2bf5e2d4e371c9143719948ad7520c2768'],6.0,5.0,137.0,103.0,1238.0,HADOOP-17628,Distcp contract test is really slow with ABFS and S3A; timing out,Sub-task,Resolved,Fixed
+ccfa072dc77d6b085d92f30d4ca667b0d6b25c4d,Viraj Jasani,2021-08-03 11:02:00+05:18,GitHub,2021-08-03 14:44:00+09:00,"HADOOP-17612. Upgrade Zookeeper to 3.6.3 and Curator to 5.2.0 (#3241)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['4627e9c7efc096a52fcecaca8d30228e01be3549'],14.0,3.0,4.0,6.0,631.0,HADOOP-17612,Upgrade Zookeeper to 3.6.3 and Curator to 5.2.0,Task,Resolved,Duplicate
+9fe1f24ec11c3e1c2ed5ee9db801d40a2f7a2ed6,Viraj Jasani,2021-08-06 06:45:30+05:18,GitHub,2021-08-06 09:27:30+08:00,HADOOP-17808. Avoid excessive logging for interruption (ADDENDUM) (#3267),['e80b5a08e28ab1e1f601d0b26050dca2a6d9fa60'],1.0,1.0,3.0,3.0,1340.0,HADOOP-17808,ipc.Client not setting interrupt flag after catching InterruptedException,Task,Resolved,Fixed
+5e54d92e6ec866dc49a750110863a3fa8b2bcf7c,Bryan Beaudreault,2021-08-06 05:00:20-04:00,GitHub,2021-08-06 17:00:20+08:00,HADOOP-17837: Add unresolved endpoint value to UnknownHostException (#3272),['a73b64f86b733177cf9b8b10088527e34099d73f'],2.0,2.0,2.0,1.0,1183.0,HADOOP-17837,Make it easier to debug UnknownHostExceptions from NetUtils.connect,Improvement,Resolved,Fixed
+b0b867e977ab853d1dfc434195c486cf0ca32dab,Bryan Beaudreault,2021-08-06 12:24:07-04:00,GitHub,2021-08-06 21:42:07+05:18,HADOOP-17837: Add unresolved endpoint value to UnknownHostException (ADDENDUM) (#3276),['e85c44657c4d1368e1195132bb32a815cb12934c'],1.0,1.0,2.0,1.0,606.0,HADOOP-17837,Make it easier to debug UnknownHostExceptions from NetUtils.connect,Improvement,Resolved,Fixed
+23e2a0b2021e87599339902353326f338505ba87,Viraj Jasani,2021-08-07 07:38:35+05:18,GitHub,2021-08-07 11:20:35+09:00,"HADOOP-17835. Use CuratorCache implementation instead of PathChildrenCache / TreeCache (#3266)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['4fd97e01e5ef576c8dd7ed17e9746afaf7f00a43'],4.0,4.0,114.0,180.0,1872.0,HADOOP-17835,Use CuratorCache implementation instead of PathChildrenCache / TreeCache,Task,Resolved,Fixed
+6014a089fd9810422160840bad8301319ae1430b,Liang-Chi Hsieh,2021-08-16 10:08:03-07:00,GitHub,2021-08-16 10:08:03-07:00,"HADOOP-17825. Add BuiltInGzipCompressor (#3250)
+
+Currently, GzipCodec only supports BuiltInGzipDecompressor, if native zlib is not loaded. So, without Hadoop native codec installed, saving SequenceFile using GzipCodec will throw exception like ""SequenceFile doesn't work with GzipCodec without native-hadoop code!""
+
+Same as other codecs which we migrated to using prepared packages (lz4, snappy), it will be better if we support GzipCodec generally without Hadoop native codec installed. Similar to BuiltInGzipDecompressor, we can use Java Deflater to support BuiltInGzipCompressor.",['6342d5e523941622a140fd877f06e9b59f48c48b'],5.0,5.0,380.0,38.0,4036.0,HADOOP-17825,Add BuiltInGzipCompressor,Improvement,Resolved,Fixed
+73a0c313705ac622bdc1ec465fc03b86ff347d9b,Liang-Chi Hsieh,2021-08-29 08:21:55-07:00,GitHub,2021-08-29 08:21:55-07:00,HADOOP-17877. BuiltInGzipCompressor header and trailer should not be static variables (#3350),['16e6030e25a6607b9886d01f9174984b1e71fb38'],2.0,2.0,20.0,20.0,1026.0,HADOOP-17877,BuiltInGzipCompressor header and trailer should not be static variables,Bug,Resolved,Fixed
+50dda774f13a83547e41db4e835d7106ae66c1ff,Akira Ajisaka,2021-08-30 09:55:53+09:00,GitHub,2021-08-30 09:55:53+09:00,"HADOOP-17544. Mark KeyProvider as Stable. (#2776)
+
+Reviewed-by: Masatake Iwasaki <iwasakims@apache.org>",['7b5be74228cb4a68d11f52ac061829b70a4f3144'],1.0,1.0,7.0,13.0,419.0,HADOOP-17544,Mark KeyProvider as Stable,Improvement,Resolved,Fixed
+4ea60b5733a1afa880d1d509bc4e55b83da66dc3,Yellow Flash,2021-08-31 18:13:52+05:18,GitHub,2021-08-31 13:55:52+01:00,"HADOOP-17870. Http Filesystem to qualify relative paths. (#3338)
+
+
+Contributed by Yellowflash",['164608b5465ebc6a2d296376aafbf4b272d9cff0'],2.0,2.0,36.0,13.0,182.0,HADOOP-17870,HTTP Filesystem to qualify paths in open()/getFileStatus(),Bug,Resolved,Fixed
+99a157fa4ad174c4ff979414af2edb67a98eb9fe,Viraj Jasani,2021-09-03 06:43:33+05:18,GitHub,2021-09-03 10:25:33+09:00,"HADOOP-17874. ExceptionsHandler to add terse/suppressed Exceptions in thread-safe manner (#3343)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['051207375b30ffa126cf9c961ee97535c1dfabb1'],1.0,1.0,14.0,24.0,2848.0,HADOOP-17874,ExceptionsHandler to add terse/suppressed Exceptions in thread-safe manner,Bug,Resolved,Fixed
+1d808f59d79194f0491938c4421dc518fd3e56b8,Chris Nauroth,2021-09-03 18:41:56+00:00,Chris Nauroth,2021-09-03 18:43:48+00:00,"HADOOP-15129. Datanode caches namenode DNS lookup failure and cannot startup (#3348)
+Co-authored-by:  Karthik Palaniappan
+
+Change-Id: Id079a5319e5e83939d5dcce5fb9ebe3715ee864f",['a610f6d9c3d1a425b1edea0ee0babd63dce0d890'],2.0,2.0,62.0,9.0,2774.0,HADOOP-15129,Datanode caches namenode DNS lookup failure and cannot startup,Bug,Resolved,Fixed
+6e3aeb15444bb53711d6b3b0970be9bb6d4db966,Steve Loughran,2021-09-07 15:29:37+01:00,GitHub,2021-09-07 15:29:37+01:00,"HADOOP-17894. CredentialProviderFactory.getProviders() recursion loading JCEKS file from S3A (#3393)
+
+
+* CredentialProviderFactory to detect and report on recursion.
+* S3AFS to remove incompatible providers.
+* Integration Test for this.
+
+Contributed by Steve Loughran.",['9b8f81a1794818788d72312a0b77999c6c6edcd7'],4.0,4.0,225.0,8.0,4474.0,HADOOP-17894,CredentialProviderFactory.getProviders() recursion loading JCEKS file from s3a,Sub-task,Resolved,Fixed
+ce7a5bfbd3cb55afda265d105ff10ba2e2874a3f,Masatake Iwasaki,2021-09-08 18:10:50+09:00,GitHub,2021-09-08 18:10:50+09:00,HADOOP-17899. Avoid using implicit dependency on junit-jupiter-api. (#3399),['e183ec8998d0272884b73df7eb1a6da5adf1040a'],1.0,1.0,3.0,2.0,60.0,HADOOP-17899,Avoid using implicit dependency on junit-jupiter-api,Bug,Resolved,Fixed
+5428d36b56fab319ab68258139d6133ded9bbafc,Szilard Nemeth,2021-09-08 17:27:22+02:00,Szilard Nemeth,2021-09-08 17:27:41+02:00,HADOOP-17857. Check real user ACLs in addition to proxied user ACLs. Contributed by Eric Payne,['5e166898aaa5cc16b37bc72b09a7d348bf12e3d6'],2.0,2.0,27.0,3.0,548.0,HADOOP-17857,Check real user ACLs in addition to proxied user ACLs,Improvement,Resolved,Fixed
+e70883664153a21eb0ab63b8922277dae391c3bc,Liang-Chi Hsieh,2021-09-08 21:23:25-07:00,GitHub,2021-09-08 21:23:25-07:00,HADOOP-17887. Remove the wrapper class GzipOutputStream (#3377),['bddc9bf63c3adb3d7445547bd1f8272e53b40bf7'],3.0,3.0,43.0,102.0,1155.0,HADOOP-17887,Remove GzipOutputStream,Improvement,Resolved,Fixed
+4ced012f3301d0848680fdf0ef2972da9b3e1298,Adam Binford,2021-09-09 03:49:40-04:00,GitHub,2021-09-09 16:49:40+09:00,"HADOOP-17804. Expose prometheus metrics only after a flush and dedupe with tag values (#3369)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['e70883664153a21eb0ab63b8922277dae391c3bc'],2.0,2.0,168.0,40.0,257.0,HADOOP-17804,Prometheus metrics only include the last set of labels,Bug,Resolved,Fixed
+827e19271a8808f1ebdc3f442899d3a70b93505e,pbacsko,2021-09-11 01:01:37+02:00,GitHub,2021-09-10 16:01:37-07:00,HADOOP-17901. Performance degradation in Text.append() after HADOOP-1… (#3411),['971f1b8b0a37b4d3eafdecf705afa4f684253e26'],1.0,1.0,5.0,3.0,442.0,HADOOP-17901,Performance degradation in Text.append() after HADOOP-16951,Bug,Resolved,Fixed
+d9eb5ad6d3dd53e7e20e871b3cde0a4809fa129d,Ayush Saxena,2021-09-13 22:38:39+05:18,GitHub,2021-09-13 22:38:39+05:18,HADOOP-17900. Move ClusterStorageCapacityExceededException to Public from LimitedPrivate. (#3404). Contributed by Ayush Saxena.,['17c58ac959015f69fffa912bcb30802e2d6272e9'],6.0,6.0,6.0,6.0,198.0,HADOOP-17900,Move ClusterStorageCapacityExceededException to Public from LimitedPrivate,Improvement,Resolved,Fixed
+3aa76f7e48c34a3f665ed2eb1ba633e983a81cd4,Weihao Zheng,2021-09-16 01:37:21+08:00,GitHub,2021-09-15 22:55:21+05:18,"HADOOP-17907. FileUtil#fullyDelete deletes contents of sym-linked directory when symlink cannot be deleted because of local fs fault (#3431). Contributed by Weihao Zheng. 
+
+Signed-off-by: Ayush Saxena <ayushsaxena@apache.org>",['3ecaa39668b396a62c495ce7f4b837d795b61e93'],2.0,2.0,31.0,1.0,2273.0,HADOOP-17907,FileUtil#fullyDelete deletes contents of sym-linked directory when symlink cannot be deleted because of local fs fault,Bug,Resolved,Fixed
+52c024cc3aac2571e60e69c7f8b620299aad8e27,Mehakmeet Singh,2021-09-16 02:45:28+05:18,GitHub,2021-09-15 22:27:28+01:00,"HADOOP-17195. OutOfMemory error while performing hdfs CopyFromLocal to ABFS (#3406)
+
+
+This migrates the fs.s3a-server-side encryption configuration options
+to a name which covers client-side encryption too.
+
+fs.s3a.server-side-encryption-algorithm becomes fs.s3a.encryption.algorithm
+fs.s3a.server-side-encryption.key becomes fs.s3a.encryption.key
+
+The existing keys remain valid, simply deprecated and remapped
+to the new values. If you want server-side encryption options
+to be picked up regardless of hadoop versions, use
+the old keys.
+
+(the old key also works for CSE, though as no version of Hadoop
+with CSE support has shipped without this remapping, it's less
+relevant)
+
+
+Contributed by: Mehakmeet Singh",['43f0a34dd48eb7f1018fe93a5c7e9e4e29c2ba2f'],20.0,19.0,2204.0,277.0,5825.0,HADOOP-17195,Intermittent OutOfMemory error while performing hdfs CopyFromLocal to abfs ,Sub-task,Resolved,Fixed
+c54bf199783591395432a06a0b4190f5ccad84e4,Mehakmeet Singh,2021-09-16 02:47:22+05:18,GitHub,2021-09-15 22:29:22+01:00,"HADOOP-17871. S3A CSE: minor tuning (#3412)
+
+
+This migrates the fs.s3a-server-side encryption configuration options
+to a name which covers client-side encryption too.
+
+fs.s3a.server-side-encryption-algorithm becomes fs.s3a.encryption.algorithm
+fs.s3a.server-side-encryption.key becomes fs.s3a.encryption.key
+
+The existing keys remain valid, simply deprecated and remapped
+to the new values. If you want server-side encryption options
+to be picked up regardless of hadoop versions, use
+the old keys.
+
+(the old key also works for CSE, though as no version of Hadoop
+with CSE support has shipped without this remapping, it's less
+relevant)
+
+
+Contributed by: Mehakmeet Singh",['10f3abeae76863222f59ce6b80c508100d07fcfd'],30.0,25.0,229.0,172.0,10148.0,HADOOP-17871,S3A CSE: minor tuning,Sub-task,Resolved,Fixed
+71a601241c140954cc178d75ea6afdb98a97d296,litao,2021-09-17 14:45:14+08:00,GitHub,2021-09-17 14:45:14+08:00,HADOOP-17914. Print RPC response length in the exception message (#3436),['f5c76c8e3193d5311c19f7c564e491b148c0f5cc'],2.0,2.0,6.0,4.0,2776.0,HADOOP-17914,Print RPC response length in the exception message,Improvement,Resolved,Fixed
+5ebcd4bb9270c238e91c7fabcecad6467a80f571,Steve Loughran,2021-09-17 11:06:13+01:00,Steve Loughran,2021-09-17 11:06:13+01:00,"HADOOP-17126. implement non-guava Precondition checkNotNull
+
+This adds a new class org.apache.hadoop.util.Preconditions which is
+
+* @Private/@Unstable
+* Intended to allow us to move off Google Guava
+* Is designed to be trivially backportable
+  (i.e contains no references to guava classes internally)
+
+Please use this instead of the guava equivalents, where possible.
+
+Contributed by: Ahmed Hussein
+
+Change-Id: Ic392451bcfe7d446184b7c995734bcca8c07286e",['7c25a77911ec30100576de0ddbbe0679a8c0370b'],2.0,2.0,285.0,0.0,129.0,HADOOP-17126,implement non-guava Precondition checkNotNull,Sub-task,Resolved,Fixed
+ae2c5ccfcf75a89c60ec6e4a339b46131f9134be,Neil,2021-09-21 09:43:50+08:00,GitHub,2021-09-21 10:43:50+09:00,"HADOOP-17893. Improve PrometheusSink for Namenode TopMetrics (#3426)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['feee41aa00c3d33096013674aef4e8f26af4f364'],2.0,2.0,147.0,3.0,366.0,HADOOP-17893,Improve PrometheusSink for Namenode TopMetrics,Improvement,Resolved,Fixed
+acffe203b8128989a1cde872dc5576c810e5a0f0,Mehakmeet Singh,2021-09-21 17:06:06+05:18,GitHub,2021-09-21 12:48:06+01:00,"HADOOP-17195. ABFS: OutOfMemory error while uploading huge files (#3446)
+
+
+Addresses the problem of processes running out of memory when
+there are many ABFS output streams queuing data to upload,
+especially when the network upload bandwidth is less than the rate
+data is generated.
+
+ABFS Output streams now buffer their blocks of data to
+""disk"", ""bytebuffer"" or ""array"", as set in
+""fs.azure.data.blocks.buffer""
+
+When buffering via disk, the location for temporary storage
+is set in ""fs.azure.buffer.dir""
+
+For safe scaling: use ""disk"" (default); for performance, when
+confident that upload bandwidth will never be a bottleneck,
+experiment with the memory options.
+
+The number of blocks a single stream can have queued for uploading
+is set in ""fs.azure.block.upload.active.blocks"".
+The default value is 20.
+
+Contributed by Mehakmeet Singh.",['ae2c5ccfcf75a89c60ec6e4a339b46131f9134be'],19.0,18.0,2222.0,279.0,5811.0,HADOOP-17195,Intermittent OutOfMemory error while performing hdfs CopyFromLocal to abfs ,Sub-task,Resolved,Fixed
+138add2cb2233850daa9058e6b93f50bbc342db3,Liang-Chi Hsieh,2021-09-22 07:59:28-07:00,GitHub,2021-09-22 07:59:28-07:00,HADOOP-17868. Add more tests for BuiltInGzipCompressor (#3336),['c7e7b2f907e86f169a75a9e0745f057500a7587e'],1.0,1.0,167.0,0.0,1013.0,HADOOP-17868,Add more test for the BuiltInGzipCompressor,Test,Resolved,Fixed
+9d44f503dbf2f23faa162def60e46c5c8602cce6,Viraj Jasani,2021-09-27 06:30:47+05:18,GitHub,2021-09-27 10:12:47+09:00,"HADOOP-17910. [JDK 17] TestNetUtils fails (#3481)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['1397cf24966cd98a74a94d37aaa9a09ba2aa7967'],1.0,1.0,8.0,1.0,621.0,HADOOP-17910,[JDK 17] TestNetUtils fails,Sub-task,Resolved,Fixed
+7ed949600da1684098b89acdf46673cf5d9552f3,Chao Sun,2021-09-27 13:56:22-07:00,GitHub,2021-09-27 13:56:22-07:00,HADOOP-17936. Fix test failure after reverting HADOOP-16878 (#3482),['ae6cd4cea5a73e7077bd2ae074d2d89758c5d0ae'],1.0,1.0,4.0,5.0,60.0,HADOOP-17936,TestLocalFSCopyFromLocal.testDestinationFileIsToParentDirectory failure after reverting HADOOP-16878,Test,Resolved,Fixed
+7097e5b793de68880ace8413f3be3ccd9d6d7e3c,pbacsko,2021-09-30 02:25:29+02:00,GitHub,2021-09-29 17:25:29-07:00,HADOOP-17905. Modify Text.ensureCapacity() to efficiently max out the… (#3423),['2fda61fac6c9cbd43dfc58cd0ff069282b5835e0'],1.0,1.0,13.0,3.0,445.0,HADOOP-17905,Modify Text.ensureCapacity() to efficiently max out the backing array size,Improvement,Resolved,Fixed
+211db3fe0804b47967b4e103f61a12370ee953e3,litao,2021-10-01 10:21:14+08:00,GitHub,2021-10-01 10:21:14+08:00,"HADOOP-17938. Print lockWarningThreshold in InstrumentedLock#logWarni… (#3485)
+
+Reviewed-by: Hui Fei <ferhui@apache.org>",['ed8e8793205a4c98e5a722875ea7b96b3181644d'],1.0,1.0,4.0,4.0,188.0,HDFS-16246,Print lockWarningThreshold in InstrumentedLock#logWarning and InstrumentedLock#logWaitWarning,Improvement,Resolved,Fixed
+0c498f21dee7a5bbf91ad8afbfb372d08bacce6c,Ahmed Hussein,2021-10-01 02:17:10-05:00,GitHub,2021-10-01 15:17:10+08:00,"HADOOP-17929. implement non-guava Precondition checkArgument (#3473)
+
+Reviewed-by: Viraj Jasani <vjasani@apache.org>",['1789c7c8c0fe0b9e6738fe2180c81c65bf7b75f2'],2.0,2.0,192.0,1.0,242.0,HADOOP-17929,implement non-guava Precondition checkArgument,Sub-task,Resolved,Fixed
+c36f9402dc082a8903cf6e7fdca128658b11c59d,Ahmed Hussein,2021-10-06 20:55:00-05:00,GitHub,2021-10-07 10:55:00+09:00,"HADOOP-17930. implement non-guava Precondition checkState (#3522)
+
+Reviewed-by: Viraj Jasani <vjasani@apache.org>
+Signed-off-by: Takanobu Asanuma <tasanuma@apache.org>",['e12cd0c6388550bc71b714bf937186a0346ff54c'],2.0,2.0,192.0,0.0,354.0,HADOOP-17930,implement non-guava Precondition checkState,Sub-task,Resolved,Fixed
+8071dbb9c6b4a654d5e1e7c8e3b4d2ca1a736d53,Viraj Jasani,2021-10-07 07:16:29+05:18,GitHub,2021-10-07 10:58:29+09:00,"HADOOP-17950. Provide replacement for deprecated APIs of commons-io IOUtils (#3515)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['c36f9402dc082a8903cf6e7fdca128658b11c59d'],18.0,18.0,64.0,30.0,6948.0,HADOOP-17950,Provide replacement for deprecated APIs of commons-io IOUtils,Task,Resolved,Fixed
+e103c83765898f756f88c27b2243c8dd3098a989,Viraj Jasani,2021-10-07 07:41:35+05:18,GitHub,2021-10-07 11:23:35+09:00,"HADOOP-17952. Replace Guava VisibleForTesting by Hadoop's own annotation in hadoop-common-project modules (#3503)
+
+Reviewed-by: Ahmed Hussein <ahussein@apache.org>",['8071dbb9c6b4a654d5e1e7c8e3b4d2ca1a736d53'],159.0,154.0,151.0,154.0,51817.0,HADOOP-17952,Replace Guava VisibleForTesting by Hadoop's own annotation in hadoop-common-project modules,Sub-task,Resolved,Fixed
+97c0f968792e1a45a1569a3184af7b114fc8c022,Xing Lin,2021-10-13 13:43:47-07:00,Konstantin V Shvachko,2021-10-13 13:44:00-07:00,HADOOP-16532. Fix TestViewFsTrash to use the correct homeDir. Contributed by Xing Lin. (#3514),['107fe227eb0f9694cf316da8f0ef56654909ddd0'],2.0,2.0,19.0,27.0,914.0,HADOOP-16532,Fix TestViewFsTrash to use the correct homeDir.,Bug,Resolved,Fixed
+1151edf12ed0acdabd3f263e5575175c5cb5f49a,Viraj Jasani,2021-10-14 09:25:24+05:18,GitHub,2021-10-14 13:07:24+09:00,"HADOOP-17956. Replace all default Charset usage with UTF-8 (#3529)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['7279fe8661d694fb0775f4f84333c1317f4e6899'],34.0,34.0,92.0,124.0,12826.0,HADOOP-17956,Replace all default Charset usage with UTF-8,Task,Resolved,Fixed
+cb2b7970ee190edca3b1a33427e629e32acf0ad7,Ahmed Hussein,2021-10-14 05:04:00-05:00,GitHub,2021-10-14 19:04:00+09:00,HADOOP-17123. remove guava Preconditions from Hadoop-common-project modules (#3543),['d336227e5c63a70db06ac26697994c96ed89d230'],143.0,138.0,171.0,195.0,40553.0,HADOOP-17123,remove guava Preconditions from Hadoop-common-project modules,Sub-task,Resolved,Fixed
+cb8c98fbb02847916e23ffaa60b0b54694d056d7,Mehakmeet Singh,2021-10-19 15:16:27+05:18,GitHub,2021-10-19 10:58:27+01:00,"HADOOP-17953. S3A: Tests to lookup global or per-bucket configuration for encryption algorithm (#3525)
+
+
+Followup to S3-CSE work of HADOOP-13887
+
+Contributed by Mehakmeet Singh",['5337bebcc53a0144311877362787ed9ece0cb118'],3.0,3.0,22.0,11.0,754.0,HADOOP-17953,S3A: ITestS3AFileContextStatistics test to lookup global or per-bucket configuration for encryption algorithm,Bug,Resolved,Fixed
+2194b9714eac8ba624e66c80b4fe739065d94d28,Steve Loughran,2021-10-19 11:03:37+01:00,GitHub,2021-10-19 15:21:37+05:18,"HADOOP-17945. JsonSerialization raises EOFException reading JSON data stored on google GCS (#3501)
+
+
+Contributed By: Steve Loughran",['cb8c98fbb02847916e23ffaa60b0b54694d056d7'],3.0,3.0,80.0,20.0,384.0,HADOOP-17945,JsonSerialization raises EOFException reading JSON data stored on google GCS,Bug,Resolved,Fixed
+516f36c6f14c917d85df681b86349d7416693000,Viraj Jasani,2021-10-21 13:12:25+05:18,GitHub,2021-10-21 16:54:25+09:00,HADOOP-17967. Keep restrict-imports-enforcer-rule for Guava VisibleForTesting in hadoop-main pom (#3555),['d2869940094d330434f3e82d16b1cad3c6023437'],28.0,1.0,3.0,3.0,2848.0,HADOOP-17967,Keep restrict-imports-enforcer-rule for Guava VisibleForTesting in hadoop-main pom,Task,Resolved,Fixed
+7fb1bb8f35bfca1dc9818b06023263cd4721caf5,litao,2021-11-12 22:42:18+08:00,GitHub,2021-11-12 20:00:18+05:18,"HADOOP-18005. Correct log format for LdapGroupsMapping (#3647). Contributed by tomscut.
+
+Signed-off-by: Ayush Saxena <ayushsaxena@apache.org>",['e220e88eca26311af707f7969da36d402f022a8d'],1.0,1.0,1.0,1.0,689.0,HADOOP-18005,Correct log format for LdapGroupsMapping,Wish,Resolved,Fixed
+573b358fce6dfc2da8213f3a4d88936cb52b0c12,litao,2021-11-15 21:44:49+08:00,GitHub,2021-11-15 22:44:49+09:00,HADOOP-18003. Add a method appendIfAbsent for CallerContext (#3644),['60acf8434dd829ec10b2f4b6563d7d9e09520d64'],2.0,2.0,51.0,0.0,213.0,HADOOP-18003,Add a method appendIfAbsent for CallerContext,New Feature,Resolved,Fixed
+e14a2dcbbacdb7b25f1015ddeb6a6446a76faf54,Viraj Jasani,2021-11-15 19:15:24+05:18,GitHub,2021-11-15 22:57:24+09:00,"HADOOP-18006. maven-enforcer-plugin's execution of banned-illegal-imports gets overridden in child poms (#3648)
+
+Reviewed-by: Ahmed Hussein <ahussein@apache.org>",['573b358fce6dfc2da8213f3a4d88936cb52b0c12'],11.0,1.0,1.0,1.0,148.0,HADOOP-18006,maven-enforcer-plugin's execution of banned-illegal-imports gets overridden in child poms,Bug,Resolved,Fixed
+54a1d78e16533e286455de62a545ee75cbc1eff5,Abhishek Das,2021-11-16 17:56:30-08:00,Konstantin V Shvachko,2021-11-16 17:56:30-08:00,HADOOP-17999. No-op implementation of setWriteChecksum and setVerifyChecksum in ViewFileSystem. Contributed by Abhishek Das. (#3639),['3391b696924107289a0994e7080039fb41f83105'],3.0,3.0,49.0,26.0,2650.0,HADOOP-17999,No-op implementation of setWriteChecksum and setVerifyChecksum in ViewFileSystem,Bug,Resolved,Fixed
+91af256a5b44925e5dfdf333293251a19685ba2a,huhaiyang,2021-11-17 22:41:06+08:00,GitHub,2021-11-17 22:41:06+08:00,HADOOP-17995. Stale record should be remove when DataNodePeerMetrics#dumpSendPacketDownstreamAvgInfoAsJson (#3630),['646c470e5de956e570a81dcd4890f028965be33a'],2.0,2.0,15.0,2.0,301.0,HADOOP-17995,Stale record should be remove when DataNodePeerMetrics#dumpSendPacketDownstreamAvgInfoAsJson,Bug,Resolved,Fixed
+63018dc73f4d29632e93be08d035ab9a7e73531c,smarthan,2021-11-22 19:37:05+08:00,GitHub,2021-11-22 11:37:05+00:00,HADOOP-17998. Allow get command to run with multi threads. (#3645),['c88640c4ad71dc6b7508d3a1c27ab059b92c02cf'],8.0,6.0,480.0,178.0,1268.0,HADOOP-17998,Allow get command to run with multi threads.,Improvement,Resolved,Fixed
+ae3ba45db58467ce57b0a440e236fd80f6be9ec6,Istvan Fajth,2021-11-24 11:44:57+01:00,GitHub,2021-11-24 10:44:57+00:00,HADOOP-17975. Fallback to simple auth does not work for a secondary DistributedFileSystem instance. (#3579),['08f3df3ea2afcce3973749199269a032df3732e0'],3.0,3.0,217.0,86.0,2686.0,HADOOP-17975,Fallback to simple auth does not work for a secondary DistributedFileSystem instance,Bug,Resolved,Fixed
+98fe0d0fc31e74d1bcf6770e009e7772e980144e,Steve Loughran,2021-11-24 17:33:12+00:00,GitHub,2021-11-24 17:33:12+00:00,"HADOOP-17979. Add Interface EtagSource to allow FileStatus subclasses to provide etags (#3633)
+
+
+Contributed by Steve Loughran",['e8566b38129bcef687506742b3d7d35e8e4947a9'],13.0,12.0,539.0,12.0,6683.0,HADOOP-17979,Interface EtagSource to allow FileStatus subclasses to provide etags,New Feature,Resolved,Fixed
+99b161dec729bfcc59f739eb81adb1f8eb8e7e60,huhaiyang,2021-11-25 10:20:42+08:00,GitHub,2021-11-25 10:20:42+08:00,HADOOP-17995. Stale record should be remove when DataNodePeerMetrics#dumpSendPacketDownstreamAvgInfoAsJson (#3708),['98fe0d0fc31e74d1bcf6770e009e7772e980144e'],2.0,2.0,16.0,3.0,301.0,HADOOP-17995,Stale record should be remove when DataNodePeerMetrics#dumpSendPacketDownstreamAvgInfoAsJson,Bug,Resolved,Fixed
+9c887e5b82d1b49fa64b491798748917cf7e9b8d,Takanobu Asanuma,2021-11-25 14:05:04+09:00,GitHub,2021-11-25 14:05:04+09:00,"HADOOP-18014. CallerContext should not include some characters. (#3698)
+
+Reviewed-by: Viraj Jasani <vjasani@apache.org>
+Reviewed-by: Mingliang Liu <liuml07@apache.org>
+Reviewed-by: Hui Fei <ferhui@apache.org>",['cdc13e91b619159dc4bf185ad53b950bdf5de52a'],3.0,3.0,40.0,13.0,7546.0,HADOOP-18014,CallerContext should not include some characters,Task,Resolved,Fixed
+932a78fe38b34a923f6852a1a19482075806ecba,smarthan,2021-11-29 20:45:08+08:00,GitHub,2021-11-29 12:45:08+00:00,HADOOP-18023. Allow cp command to run with multi threads. (#3721),['829af89dc4240347675e20df0ce047245f465c7b'],4.0,2.0,233.0,16.0,487.0,HADOOP-18023,Allow cp command to run with multi threads.,Improvement,Resolved,Fixed
+df4197592f7f46a349aee5d9f7c8ebbbf1efb349,Desmond Sisson,2021-12-01 15:36:54-08:00,GitHub,2021-12-01 15:36:54-08:00,"HADOOP-18029: Update CompressionCodecFactory to handle uppercase file extensions (#3739)
+
+Co-authored-by: Desmond Sisson <sissonde@amazon.com>",['4dea4a7b672c5bcd72b834a68cd76d46c454ce88'],2.0,2.0,110.0,79.0,461.0,HADOOP-18029,Update CompressionCodecFactory to handle uppercase file extensions,Improvement,Resolved,Fixed
+47ea0d734fa290e2fac1b4d09f42a128c7294fd9,Andras Gyori,2021-12-03 17:44:58+01:00,GitHub,2021-12-03 16:44:58+00:00,"HADOOP-18021. Provide a public wrapper of Configuration#substituteVars (#3710)
+
+
+Contributed by Andras Gyori",['dd6b987c93e8319560b633360f30ac84fc48e403'],3.0,3.0,31.0,2.0,4550.0,HADOOP-18021,Provide a public wrapper of Configuration#substituteVars,Bug,Resolved,Fixed
+6ed01585eb1929497efbafe2f19bda4f1a56575c,Haoze Wu,2021-12-08 04:48:43-05:00,GitHub,2021-12-08 18:48:43+09:00,HADOOP-18024. SocketChannel is not closed when IOException happens in Server$Listener.doAccept (#3719),['53edd0de5ae6cbf0cbba101f387507ab9f49c8af'],2.0,2.0,68.0,4.0,4347.0,HADOOP-18024,SocketChannel is not closed when IOException happens in Server$Listener.doAccept,Bug,Reopened,
+d7c5400fbcd31ccb8d2301e244fcd7969fd0b77e,Wei-Chiu Chuang,2021-12-10 17:14:04+08:00,GitHub,2021-12-10 18:14:04+09:00,"HADOOP-17982. OpensslCipher initialization error should log a WARN message. (#3599)
+
+Change-Id: I070fc4784679b3be73aa3a11201bbae23c20ad4e",['a0d8cde133a7d8719217567efaa4e66c583f790d'],1.0,1.0,2.0,2.0,162.0,HADOOP-17982,OpensslCipher initialization error should log a WARN message,Improvement,Resolved,Fixed
+4483607a4edc0f13264f4ea37abd90aba97e1ef0,Dhananjay Badaya,2021-12-17 12:23:46+05:18,GitHub,2021-12-17 16:05:46+09:00,"HADOOP-13500. Synchronizing iteration of Configuration properties object (#3775)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['d8dea6f52ada03e099fa7dbb3efe62345ca27588'],2.0,2.0,35.0,4.0,4517.0,HADOOP-13500,Synchronizing iteration of Configuration properties object,Bug,Resolved,Fixed
+04b6b9a87bf024e82aa50328b4994aea4268d98e,Viraj Jasani,2021-12-20 12:19:34+05:18,GitHub,2021-12-20 16:01:34+09:00,"HADOOP-16908. Prune Jackson 1 from the codebase and restrict it's usage for future (#3789)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['07141426e08e1586833018a8f367d27cd5bcb8e2'],32.0,22.0,140.0,128.0,8817.0,HADOOP-16908,Prune Jackson 1 from the codebase and restrict it's usage for future,Sub-task,Resolved,Fixed
+7398a0f1b2ca434f41d1414f884731637b9855bf,jianghuazhu,2022-01-04 10:25:13+08:00,GitHub,2022-01-04 11:25:13+09:00,"HADOOP-18063. Remove unused import AbstractJavaKeyStoreProvider in Shell class. (#3846)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['61d424f385539c14172386c19ecda5ea57af2632'],1.0,1.0,0.0,1.0,769.0,HADOOP-18063,Remove unused import AbstractJavaKeyStoreProvider in Shell class,Bug,Resolved,Fixed
+da0a6ba1ce7667f1f58cc0f766ce65d126efcaf2,Mukund Thakur,2022-01-06 10:42:27+05:18,GitHub,2022-01-06 10:42:27+05:18,"HADOOP-18065. ExecutorHelper.logThrowableFromAfterExecute() is too noisy. (#3860)
+
+Downgrading warn logs to debug in case of InterruptedException
+
+Contributed By: Mukund Thakur",['46b02788bd7b9d19fed23292bdf1632d30ada047'],1.0,1.0,5.0,5.0,35.0,HADOOP-18065,ExecutorHelper.logThrowableFromAfterExecute() is too noisy. ,Improvement,Resolved,Fixed
+f64fda0f00b22793a9c5ea10f9d73ef33fa2b563,Viraj Jasani,2022-01-06 15:14:49+05:18,GitHub,2022-01-06 17:56:49+08:00,"HADOOP-18055. Async Profiler endpoint for Hadoop daemons (#3824)
+
+Reviewed-by: Akira Ajisaka <aajisaka@apache.org>",['da0a6ba1ce7667f1f58cc0f766ce65d126efcaf2'],11.0,6.0,715.0,0.0,1824.0,HADOOP-18055,Async Profiler endpoint for Hadoop daemons,New Feature,Resolved,Fixed
+93294f03296d5f7c5a4111d5f63c5d4afa5b8562,Viraj Jasani,2022-01-12 13:38:34+05:18,GitHub,2022-01-12 16:20:34+08:00,HADOOP-18077. ProfileOutputServlet unable to proceed due to NPE (#3875),['e2d620192aa0b712d05e4092eb63ef2ccdcd8220'],2.0,2.0,11.0,3.0,1404.0,HADOOP-18077,ProfileOutputServlet unable to proceed due to NPE,Bug,Resolved,Fixed
+0d17b629ffee2f645f405ad46b0afa65224f87d5,Xing Lin,2022-01-25 06:10:18-08:00,GitHub,2022-01-25 19:28:18+05:18,"HADOOP-18093. Better exception handling for testFileStatusOnMountLink() in ViewFsBaseTest.java (#3918). Contributed by Xing Lin.
+
+Signed-off-by: Ayush Saxena <ayushsaxena@apache.org>",['8c7c49d877197efe44067a58301ac56908ab5bbb'],1.0,1.0,2.0,7.0,788.0,HADOOP-18093,Better exception handling for testFileStatusOnMountLink() in ViewFsBaseTest.java,Improvement,Resolved,Fixed
+4faac58841106bfa0cd7b3edd20740eed5e60c85,Viraj Jasani,2022-01-26 08:42:16+05:18,GitHub,2022-01-26 11:24:16+08:00,"HADOOP-18089. Test coverage for Async profiler servlets (#3913)
+
+Reviewed-by: Akira Ajisaka <akiraaj@amazon.com>
+Reviewed-by: Wei-Chiu Chuang <weichiu@apache.org>",['4b26635a34e30783b4796c50512fd4e7b126f23c'],2.0,2.0,95.0,1.0,330.0,HADOOP-18089,Test coverage for Async profiler servlets,Test,Resolved,Fixed
+3684c7f66a4dab4410be3e2de4a28fbb02ba6939,Abhishek Das,2022-01-31 15:19:43-08:00,Owen O'Malley,2022-02-03 16:28:04-08:00,"HADOOP-18100: Change scope of inner classes in InodeTree to make them accessible outside package
+
+Fixes #3950
+
+Signed-off-by: Owen O'Malley <omalley@apache.org>",['41c86b6464789e349603db3ec319516146cd3ea7'],2.0,2.0,25.0,7.0,655.0,HADOOP-18100,Change scope of inner classes in InodeTree to make them accessible outside package,Bug,Resolved,Fixed
+efdec92cab8a88deb5ec9e81f5c8feb7a0fa873b,Steve Loughran,2022-02-10 12:31:41+00:00,GitHub,2022-02-10 12:31:41+00:00,"HADOOP-18091. S3A auditing leaks memory through ThreadLocal references (#3930)
+
+
+Adds a new map type WeakReferenceMap, which stores weak
+references to values, and a WeakReferenceThreadMap subclass
+to more closely resemble a thread local type, as it is a
+map of threadId to value.
+
+Construct it with a factory method and optional callback
+for notification on loss and regeneration.
+
+ WeakReferenceThreadMap<WrappingAuditSpan> activeSpan =
+      new WeakReferenceThreadMap<>(
+          (k) -> getUnbondedSpan(),
+          this::noteSpanReferenceLost);
+
+This is used in ActiveAuditManagerS3A for span tracking.
+
+Relates to
+* HADOOP-17511. Add an Audit plugin point for S3A
+* HADOOP-18094. Disable S3A auditing by default.
+
+Contributed by Steve Loughran.",['390967f1f0f337387d1810a3ce1529fdff430e31'],18.0,14.0,1222.0,25.0,2890.0,HADOOP-18091,S3A auditing leaks memory through ThreadLocal references,Sub-task,Resolved,Fixed
+ca8ba24051b7fca4612c9c182cb49f5183ce33ba,Xing Lin,2022-01-26 14:48:59-08:00,Owen O'Malley,2022-02-10 16:43:04-08:00,"HADOOP-18110. ViewFileSystem: Add Support for Localized Trash Root
+
+Fixes #3956",['fe583c4b63080f127d7793711d90d7b5589612af'],3.0,3.0,255.0,2.0,2736.0,HADOOP-18110,ViewFileSystem: Add Support for Localized Trash Root,Improvement,Resolved,Fixed
+19d90e62fb28539f8c79bbb24f703301489825a6,Chentao Yu,2021-04-15 17:46:40-07:00,Konstantin V Shvachko,2022-02-15 15:58:24-08:00,HADOOP-18109. Ensure that default permissions of directories under internal ViewFS directories are the same as directories on target filesystems. Contributed by Chentao Yu. (3953),['48bef285a85e311b52335c8687c6e9a5f8afdf70'],2.0,2.0,19.0,5.0,1828.0,HADOOP-18109,Ensure that default permissions of directories under internal ViewFS directories are the same as directories on target filesystems,Bug,Resolved,Fixed
+2025243fbf94fb9a0324de7b159a275bc58c84d0,jianghuazhu,2022-02-17 04:19:45+08:00,GitHub,2022-02-17 01:37:45+05:18,HADOOP-18082.Add debug log when RPC#Reader gets a Call. (#3891). Contributed by JiangHua Zhu.,['19d90e62fb28539f8c79bbb24f703301489825a6'],1.0,1.0,3.0,0.0,2870.0,HADOOP-18082,Add debug log when RPC#Reader gets a Call,Improvement,Reopened,
+cae749b076f35f0be13a926ee8cfbb7ce4402746,Steve Loughran,2022-02-21 17:08:22+00:00,Steve Loughran,2022-02-21 17:08:56+00:00,"HADOOP-18136. Verify FileUtils.unTar() handling of missing .tar files.
+
+Contributed by Steve Loughran
+
+Change-Id: I73af19d2e2e41f4ba686c470726a80c3903a1950",['007c2011efe552d54956dce35e8a3ee095cdef2c'],2.0,2.0,43.0,5.0,2289.0,HADOOP-18136,Verify FileUtils.unTar() handling of missing .tar files: Fixes CVE-2022-25168,Improvement,Resolved,Fixed
+12fa38d546e2de84fb89bee60aea9345ad35b46a,Owen O'Malley,2022-02-23 16:17:53-08:00,Owen O'Malley,2022-02-24 15:01:50-08:00,"HADOOP-18139: Allow configuration of zookeeper server principal.
+
+Fixes #4024
+
+Signed-off-by: Owen O'Malley <oomalley@linkedin.com>",['6b07c851f3f33688f0998bcee3de615901a3df2d'],3.0,3.0,36.0,0.0,1343.0,HADOOP-18139,Allow configuration of zookeeper server principal,Improvement,Resolved,Fixed
+db36747e831f7045a3e1a0ca390c944981dd141a,Duo Zhang,2022-03-10 10:15:09+08:00,GitHub,2022-03-10 10:15:09+08:00,"HADOOP-17526 Use Slf4jRequestLog for HttpRequestLog (#4050)
+
+Signed-off-by: Wei-Chiu Chuang <weichiu@apache.org>",['db8ae4b65448c506c9234641b2c1f9b8e894dc18'],6.0,5.0,24.0,195.0,117.0,HADOOP-17526,Use Slf4jRequestLog for HttpRequestLog,Sub-task,Resolved,Fixed
+d0fa9b5775185bd83e4a767a7dfc13ef89c5154a,Gautham B A,2022-03-10 21:50:38+05:18,GitHub,2022-03-10 21:50:38+05:18,HADOOP-18155. Refactor tests in TestFileUtil (#4053),['383b73417df80028011d229dce9daf8e4ecbdb49'],2.0,2.0,275.0,163.0,2356.0,HADOOP-18155,Refactor tests in TestFileUtil,Improvement,Resolved,Fixed
+672e380c4f6ffcb0a6fee6d8263166e16b4323c2,Mukund Thakur,2022-03-11 12:53:45+05:18,GitHub,2022-03-11 12:53:45+05:18,"HADOOP-18112: Implement paging during multi object delete. (#4045)
+
+
+Multi object delete of size more than 1000 is not supported by S3 and 
+fails with MalformedXML error. So implementing paging of requests to 
+reduce the number of keys in a single request. Page size can be configured
+using ""fs.s3a.bulk.delete.page.size"" 
+
+ Contributed By: Mukund Thakur",['ed65aa23240b3dd6b56e86e5f0e9d38069fb3b01'],17.0,17.0,273.0,232.0,6653.0,HADOOP-18112,Implement paging during S3 multi object delete.,Sub-task,Resolved,Fixed
+8b8158f02df18424b2406fd66b34c1bdf3d7ab55,Xing Lin,2022-02-22 15:52:03-08:00,Owen O'Malley,2022-03-14 11:29:48-07:00,"HADOOP-18144: getTrashRoot in ViewFileSystem should return a path in ViewFS.
+
+To get the new behavior, define fs.viewfs.trash.force-inside-mount-point to be true.
+
+If the trash root for path p is in the same mount point as path p,
+and one of:
+* The mount point isn't at the top of the target fs.
+* The resolved path of path is root (eg it is the fallback FS).
+* The trash root isn't in user's target fs home directory.
+get the corresponding viewFS path for the trash root and return it.
+Otherwise, use <mnt>/.Trash/<user>.
+
+Signed-off-by: Owen O'Malley <oomalley@linkedin.com>",['7b5eac27ff380a31428a71f5fd162a9cdee05dd8'],7.0,7.0,206.0,126.0,3596.0,HADOOP-18144,"getTrashRoot/s in ViewFileSystem should return viewFS path, not targetFS path",Improvement,Resolved,Fixed
+9037f9a334978aea9ff288547637e0038c63894f,Steve Loughran,2022-03-16 15:12:03+00:00,Steve Loughran,2022-03-17 11:20:53+00:00,"HADOOP-18162. hadoop-common support for MAPREDUCE-7341 Manifest Committer
+
+* New statistic names in StoreStatisticNames
+  (for joint use with s3a committers)
+* Improvements to IOStatistics implementation classes
+* RateLimiting wrapper to guava RateLimiter
+* S3A committer Tasks moved over as TaskPool and
+  added support for RemoteIterator
+* JsonSerialization.load() to fail fast if source does not exist
+
++ tests.
+
+This commit is a prerequisite for the main MAPREDUCE-7341 Manifest Committer
+patch.
+
+Contributed by Steve Loughran
+
+Change-Id: Ia92e2ab5083ac3d8d3d713a4d9cb3e9e0278f654",['7f6a891f0313528b566de3c97b95e1bf2e4e4421'],11.0,11.0,1487.0,2.0,1549.0,HADOOP-18162,hadoop-common enhancements for the Manifest Committer of MAPREDUCE-7341,Improvement,Resolved,Fixed
+da9970dd697752b4d00fe4e4760ea9cbf019ff2e,Abhishek Das,2022-02-17 20:16:19-08:00,Owen O'Malley,2022-03-17 17:25:55-07:00,"HADOOP-18129: Change URI to String in INodeLink to reduce memory footprint of ViewFileSystem
+
+Fixes #3996",['8294bd5a37c0de15af576700c6cba46791eddd07'],4.0,4.0,50.0,22.0,4480.0,HADOOP-18129,Change URI[] in INodeLink to String[] to reduce memory footprint of ViewFileSystem,Bug,Resolved,Fixed
+708a0ce21bc1bd6164ff650e9104de70fe3f1dbb,Steve Loughran,2022-03-22 13:20:37+00:00,Steve Loughran,2022-03-22 13:21:12+00:00,"HADOOP-13704. Optimized S3A getContentSummary()
+
+Optimize the scan for s3 by performing a deep tree listing,
+inferring directory counts from the paths returned.
+
+Contributed by Ahmar Suhail.
+
+Change-Id: I26ffa8c6f65fd11c68a88d6e2243b0eac6ffd024",['2beb7296fb47e2d40e209c1129bf59f61398b03d'],9.0,8.0,269.0,46.0,3719.0,HADOOP-13704,S3A getContentSummary() to move to listFiles(recursive) to count children; instrument use,Sub-task,Resolved,Fixed
+61e809b245c5a2dc0e4db6638093932b0b34ca5a,PJ Fanning,2022-03-26 12:31:16+01:00,GitHub,2022-03-26 20:31:16+09:00,"HADOOP-13386. Upgrade Avro to 1.9.2 (#3990)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['da09d68056d4e6a9490ddc6d9ae816b65217e117'],12.0,2.0,2.0,2.0,150.0,HADOOP-13386,Upgrade Avro to 1.9.2,Sub-task,Resolved,Fixed
+08e6d0ce608647d57da647c71ceb216243ff16d9,zhongjingxiong,2022-03-30 19:42:50+08:00,GitHub,2022-03-30 12:42:50+01:00,"HADOOP-18145. Fileutil's unzip method causes unzipped files to lose their original permissions (#4036)
+
+
+Contributed by jingxiong zhong",['6eea28c3f3813594279b81c5be9cc3087bf3d99f'],2.0,2.0,126.0,29.0,2429.0,HADOOP-18145,Fileutil's unzip method causes unzipped files to lose their original permissions,Bug,Resolved,Fixed
+15a5ea2c955a7d1b89aea0cb127727a57db76c76,Xing Lin,2022-03-31 14:59:09-07:00,GitHub,2022-03-31 21:59:09+00:00,"HADOOP-18169. getDelegationTokens in ViewFs should also fetch the token from fallback FS (#4094)
+
+HADOOP-18169. getDelegationTokens in ViewFs should also fetch the token from the fallback FS",['94031b729d01d337268dc2f5ae286de71c768b02'],2.0,2.0,33.0,0.0,1551.0,HADOOP-18169,getDelegationTokens in ViewFs should also fetch the token from the fallback FS,Bug,Resolved,Fixed
+f70935522b0fd771dedb9604b92397135fd0c8ad,Viraj Jasani,2022-04-07 13:47:45+05:18,GitHub,2022-04-07 17:29:45+09:00,"HADOOP-18188. Support touch command for directory (#4135)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['4b786c797a76d00ef33237fde76f2bd6edda7f3a'],3.0,3.0,311.0,3.0,508.0,HADOOP-18188,Support touch command for directory,Improvement,Resolved,Fixed
+b69ede7154d44538a4a66824c34f7ba143deef25,Viraj Jasani,2022-04-08 17:49:54+05:18,GitHub,2022-04-08 21:31:54+09:00,HADOOP-18191. Log retry count while handling exceptions in RetryInvocationHandler (#4133),['37650ced81964efe7a9ea45bf505af96b8035d53'],1.0,1.0,6.0,4.0,359.0,HADOOP-18191,Log retry count while handling exceptions in RetryInvocationHandler,Task,Resolved,Fixed
+98b9c435f24c76e3629f6d8e9c14473b46fe6a0e,Xing Lin,2022-04-19 22:47:02-07:00,GitHub,2022-04-19 22:47:02-07:00,"HADOOP-18172: Changed scope for isRootInternalDir/getRootFallbackLink for InodeTree (#4106)
+
+* HADOOP-18172: Change scope of InodeTree and its member methods to make them accessible from outside package.
+
+Co-authored-by: Xing Lin <xinglin@linkedin.com>",['ec0ff1dc04b2ced199d71543a8260e9225d9e014'],1.0,1.0,6.0,6.0,637.0,HADOOP-18172,Change scope of getRootFallbackLink for InodeTree to make them accessible from outside package,Improvement,Resolved,Fixed
+1b4dba99b5d941eb8fd4787462a998c13ea2f171,Steve Loughran,2022-04-24 17:03:59+01:00,Steve Loughran,2022-04-24 17:33:04+01:00,"HADOOP-16202. Enhanced openFile(): hadoop-common changes. (#2584/1)
+
+This defines standard option and values for the
+openFile() builder API for opening a file:
+
+fs.option.openfile.read.policy
+ A list of the desired read policy, in preferred order.
+ standard values are
+ adaptive, default, random, sequential, vector, whole-file
+
+fs.option.openfile.length
+ How long the file is.
+
+fs.option.openfile.split.start
+ start of a task's split
+
+fs.option.openfile.split.end
+ end of a task's split
+
+These can be used by filesystem connectors to optimize their
+reading of the source file, including but not limited to
+* skipping existence/length probes when opening a file
+* choosing a policy for prefetching/caching data
+
+The hadoop shell commands which read files all declare ""whole-file""
+and ""sequential"", as appropriate.
+
+Contributed by Steve Loughran.
+
+Change-Id: Ia290f79ea7973ce8713d4f90f1315b24d7a23da1",['17d64ba495e77bbf276efc655e044d299ef66a75'],36.0,32.0,633.0,146.0,13546.0,HADOOP-16202,Enhance openFile() for better read performance against object stores ,Improvement,Resolved,Fixed
+d60262fe0092a9b45ee17830b98750fb00b856b1,hchaverri,2022-04-26 09:20:11-07:00,GitHub,2022-04-26 16:20:11+00:00,"HADOOP-18167. Add metrics to track delegation token secret manager op… (#4092)
+
+* HADOOP-18167. Add metrics to track delegation token secret manager operations",['f1e5f8e7643142589f609566d872c16147a3a976'],2.0,2.0,252.0,5.0,1212.0,HADOOP-18167,Add metrics to track delegation token secret manager operations,Improvement,Resolved,Fixed
+99a83fd4bdd310920deea163a90fff454b7ce851,hchaverr,2022-05-05 12:39:58-07:00,Owen O'Malley,2022-05-10 13:58:39-07:00,"HADOOP-18222. Prevent DelegationTokenSecretManagerMetrics from registering multiple times
+
+Fixes #4266
+
+Signed-off-by: Owen O'Malley <oomalley@linkedin.com>",['d486ae8c0ffeb5127c504ef45795c3c14e3f5b5c'],2.0,2.0,45.0,26.0,1226.0,HADOOP-18222,Prevent DelegationTokenSecretManagerMetrics from registering multiple times ,Bug,Resolved,Fixed
+6a95c3a0390d1af29d1d61998f8e72510b0c3cf8,Lei Yang,2022-05-09 11:52:15-07:00,Owen O'Malley,2022-05-11 17:01:21-07:00,"HADOOP-18193:Support nested mount points in INodeTree
+
+Fixes #4181
+
+Signed-off-by: Owen O'Malley <oomalley@linkedin.com>",['1350539f2de158c08b47f336e8793e7aaecc8177'],8.0,8.0,814.0,171.0,5127.0,HADOOP-18193,Support nested mount points in INodeTree,Improvement,Resolved,Fixed
+f6fa5bd1aa085a4d22f3450b545bb70063da9f51,slfan1989,2022-05-18 04:12:04-07:00,GitHub,2022-05-18 12:12:04+01:00,"HADOOP-18229. Fix Hadoop-Common JavaDoc Errors (#4292)
+
+
+
+Contributed by slfan1989",['3ecdf39943c80ddaa7ad498451292090fb504dbc'],366.0,365.0,4833.0,1353.0,78506.0,HADOOP-18229,Fix Hadoop Common Java Doc Errors,Sub-task,Resolved,Fixed
+78008bc0eeaebb52c84e1654914d58e5eab8382c,Ritesh H Shukla,2022-05-19 13:20:24-07:00,GitHub,2022-05-20 04:20:24+08:00,HADOOP-18245 Extend KMS related exceptions that get mapped to ConnectException (#4329),['0e6a6d18809c1958e3aaae88f0d3ce5bf380b350'],2.0,2.0,12.0,6.0,1266.0,HADOOP-18245,Extend KMS related exceptions that get mapped to ConnectException ,Bug,Resolved,Fixed
+21fa693d38a0ea684899ac12729e1785f95e622f,Ashutosh Gupta,2022-05-30 17:34:06+01:00,GitHub,2022-05-30 17:34:06+01:00,"HADOOP-18238. Fix reentrancy check in SFTPFileSystem.close() (#4330)
+
+
+Contributed by Ashutosh Gupta",['ba6520f67f4aed65f7a8290dd7999322e3fe9c88'],1.0,1.0,3.0,3.0,549.0,HADOOP-18238,Fix reentrancy check in SFTPFileSystem.close(),Bug,Resolved,Fixed
+e199da3fae1c82e87f88c8c50f6a96c6515e2edd,Steve Loughran,2022-06-17 19:11:35+01:00,GitHub,2022-06-17 19:11:35+01:00,"HADOOP-17833. Improve Magic Committer performance (#3289)
+
+
+Speed up the magic committer with key changes being
+
+* Writes under __magic always retain directory markers
+
+* File creation under __magic skips all overwrite checks,
+  including the LIST call intended to stop files being
+	created over dirs.
+* mkdirs under __magic probes the path for existence
+  but does not look any further.  	
+
+Extra parallelism in task and job commit directory scanning
+Use of createFile and openFile with parameters which all for
+HEAD checks to be skipped.
+
+The committer can write the summary _SUCCESS file to the path
+`fs.s3a.committer.summary.report.directory`, which can be in a
+different file system/bucket if desired, using the job id as
+the filename. 
+
+Also: HADOOP-15460. S3A FS to add `fs.s3a.create.performance`
+
+Application code can set the createFile() option
+fs.s3a.create.performance to true to disable the same
+safety checks when writing under magic directories.
+Use with care.
+
+The createFile option prefix `fs.s3a.create.header.`
+can be used to add custom headers to S3 objects when
+created.
+
+
+Contributed by Steve Loughran.",['020201cb65e589d7b15d5d6bdd34ee0225be5bb9'],89.0,83.0,4099.0,2179.0,22785.0,HADOOP-17833,Improve Magic Committer Performance,Improvement,Resolved,Fixed
+e38e13be03d581574f66c50b56a0918844849e17,Viraj Jasani,2022-06-17 21:17:20-07:00,GitHub,2022-06-18 12:17:20+08:00,"HADOOP-18288. Total requests and total requests per sec served by RPC servers (#4431)
+
+Reviewed-by: Steve Loughran <stevel@apache.org>
+Signed-off-by: Tao Li <tomscut@apache.org>",['62e447610208919a00ecdf8eb99ad498689bbb05'],7.0,6.0,153.0,0.0,5627.0,HADOOP-18288,Total requests and total requests per sec served by RPC servers,Improvement,Resolved,Fixed
+477b67a335897bc8c7f9e6935c64e66da386797b,Samrat,2022-06-20 11:59:04+05:18,GitHub,2022-06-20 11:59:04+05:18,"HADOOP-18266. Using HashSet/ TreeSet Constructor for hadoop-common (#4365)
+
+* HADOOP-18266. Using HashSet/ TreeSet Constructor for hadoop-common
+
+Co-authored-by: Deb <dbsamrat@3c22fba1b03f.ant.amazon.com>",['efc2761d32a7e0affff4c8218b7751b26de4ec91'],37.0,37.0,69.0,69.0,13253.0,HADOOP-18266,Replace with HashSet/TreeSet constructor in Hadoop-common-project,Sub-task,Resolved,Fixed
+2daf0a814f800c260251b2cd4bf0ece3642c3aa8,Mukund Thakur,2022-02-01 19:40:38+05:18,Steve Loughran,2022-06-22 17:29:32+01:00,"HADOOP-11867. Add a high-performance vectored read API. (#3904)
+
+part of HADOOP-18103.
+Add support for multiple ranged vectored read api in PositionedReadable.
+The default iterates through the ranges to read each synchronously,
+but the intent is that FSDataInputStream subclasses can make more
+efficient readers especially in object stores implementation.
+
+Also added implementation in S3A where smaller ranges are merged and
+sliced byte buffers are returned to the readers. All the merged ranged are
+fetched from S3 asynchronously.
+
+Contributed By: Owen O'Malley and Mukund Thakur",['e6ecc4f3e4433ae23fd745f6e0c641a019664253'],30.0,20.0,2244.0,86.0,7116.0,HADOOP-11867,Add a high-performance vectored read API.,Sub-task,Resolved,Fixed
+5db0f34e29c68557842b9892bc83e93f7ef58307,Mukund Thakur,2022-04-30 04:05:33+05:18,Steve Loughran,2022-06-22 17:29:32+01:00,"HADOOP-18104: S3A: Add configs to configure minSeekForVectorReads and maxReadSizeForVectorReads (#3964)
+
+Part of HADOOP-18103.
+Introducing fs.s3a.vectored.read.min.seek.size and fs.s3a.vectored.read.max.merged.size
+to configure min seek and max read during a vectored IO operation in S3A connector.
+These properties actually define how the ranges will be merged. To completely
+disable merging set fs.s3a.max.readsize.vectored.read to 0.
+
+Contributed By: Mukund Thakur",['2daf0a814f800c260251b2cd4bf0ece3642c3aa8'],11.0,9.0,266.0,16.0,5100.0,HADOOP-18104,Add configs to configure minSeekForVectorReads and maxReadSizeForVectorReads,Sub-task,Resolved,Fixed
+1408dd89a74a4dd03d23a3e7e4b1acb430bbc0e9,Mukund Thakur,2022-06-02 03:23:54+05:18,Steve Loughran,2022-06-22 17:29:32+01:00,"HADOOP-18107 Adding scale test for vectored reads for large file (#4273)
+
+part of HADOOP-18103.
+
+Contributed By: Mukund Thakur",['5db0f34e29c68557842b9892bc83e93f7ef58307'],6.0,6.0,111.0,77.0,2737.0,HADOOP-18107,Vectored IO support for large S3 files. ,Sub-task,Resolved,Fixed
+0d49bd200441f4558fb28b78d20fbc1ac7682eb7,Mukund Thakur,2022-06-02 03:26:06+05:18,Steve Loughran,2022-06-22 17:29:32+01:00,"HADOOP-18105 Implement buffer pooling with weak references (#4263)
+
+part of HADOOP-18103.
+Required for vectored IO feature. None of current buffer pool
+implementation is complete. ElasticByteBufferPool doesn't use
+weak references and could lead to memory leak errors and
+DirectBufferPool doesn't support caller preferences of direct
+and heap buffers and has only fixed length buffer implementation.
+
+Contributed By: Mukund Thakur",['1408dd89a74a4dd03d23a3e7e4b1acb430bbc0e9'],5.0,5.0,491.0,2.0,385.0,HADOOP-18105,Implement a variant of ElasticByteBufferPool which uses weak references for garbage collection.,Sub-task,Resolved,Fixed
+4d1f6f9b995cbf65fc8a00cb6c8fabe70d3b5474,Mukund Thakur,2022-06-21 03:33:40+05:18,Steve Loughran,2022-06-22 17:29:32+01:00,"HADOOP-18106: Handle memory fragmentation in S3A Vectored IO. (#4445)
+
+part of HADOOP-18103.
+Handling memory fragmentation in S3A vectored IO implementation by
+allocating smaller user range requested size buffers and directly
+filling them from the remote S3 stream and skipping undesired
+data in between ranges.
+This patch also adds aborting active vectored reads when stream is
+closed or unbuffer() is called.
+
+Contributed By: Mukund Thakur",['0d49bd200441f4558fb28b78d20fbc1ac7682eb7'],17.0,13.0,464.0,142.0,4873.0,HADOOP-18106,Handle memory fragmentation in S3 Vectored IO implementation.,Sub-task,Resolved,Fixed
+dd819f7904ca437b74672a6cacb3df9966709a52,Ashutosh Gupta,2022-06-23 08:00:28+01:00,GitHub,2022-06-23 12:18:28+05:18,"HADOOP-18271.Remove unused Imports in Hadoop Common project (#4392)
+
+Co-authored-by: Ashutosh Gupta <ashugpt@amazon.com>",['77d1b194c77ec62dc31f89e15594bc1250d88de3'],59.0,59.0,7.0,101.0,9587.0,HADOOP-18271,Remove unused Imports in Hadoop Common project,Improvement,Resolved,Fixed
+43112bd472661b4044808210a77ae938a120934f,swamirishi,2022-06-27 17:20:58-07:00,GitHub,2022-06-27 17:20:58-07:00,HADOOP-18306: Warnings should not be shown on cli console when linux user not present on client (#4474). Contributed by swamirishi.,['823f5ee0d4cc508a709baf836a31b1400dd1f20c'],1.0,1.0,1.0,1.0,196.0,HADOOP-18306,Warnings should not be shown on cli console when linux user not present on client,New Feature,Resolved,Fixed
+321a4844ad8fe935ef6ad76792a2b250610c05ef,jianghuazhu,2022-06-29 10:06:39+08:00,GitHub,2022-06-28 19:06:39-07:00,HADOOP-18314. Add some description for PowerShellFencer. (#4505),['cf33164857530a38aa3edc99a9051a47aae9dede'],5.0,2.0,5.0,0.0,236.0,HADOOP-18314,Add some description for PowerShellFencer,Improvement,Resolved,Fixed
+073b8ea1d510d81e822a4801b89ddc03b6f10e6c,slfan1989,2022-06-29 02:50:41-07:00,GitHub,2022-06-29 15:08:41+05:18,HADOOP-18284. Remove Unnecessary semicolon ';'  (#4422). Contributed by fanshilun.,['321a4844ad8fe935ef6ad76792a2b250610c05ef'],25.0,25.0,37.0,39.0,15296.0,HADOOP-18284,Remove Unnecessary semicolon ';' ,Improvement,Resolved,Fixed
+a432925f74b93d05b4dfdd1831bfbabbf4466a80,Ashutosh Gupta,2022-07-06 05:30:14+01:00,GitHub,2022-07-06 09:48:14+05:18,"HADOOP-18321.Fix when to read an additional record from a BZip2 text file split (#4521)
+
+* HADOOP-18321.Fix when to read an additional record from a BZip2 text file split
+
+Co-authored-by: Ashutosh Gupta <ashugpt@amazon.com> and Reviewed by Akira Ajisaka.",['161b1fac2e20cc9a6090f1c2cd8859d9b6def8d3'],13.0,13.0,921.0,10.0,3106.0,HADOOP-18321,Fix when to read an additional record from a BZip2 text file split,Bug,Resolved,Fixed
+e11ba5930e29a370f07685eac888bdb95aefc54f,lmccay,2022-07-11 01:03:44-04:00,GitHub,2022-07-11 01:03:44-04:00,"HADOOP-18074 - Partial/Incomplete groups list can be returned in LDAP… (#4503)
+
+* HADOOP-18074 - Partial/Incomplete groups list can be returned in LDAP groups lookup",['9b1d3579b483069d0a211cb0b29c1f25013684dd'],2.0,2.0,93.0,13.0,797.0,HADOOP-18074,Partial/Incomplete groups list can be returned in LDAP groups lookup,Bug,Resolved,Fixed
+4c4a940da279fd76d4839efbe9b2b56e34c6f9ff,HerCath,2022-07-13 13:35:44+02:00,GitHub,2022-07-13 12:35:44+01:00,"HADOOP-18217. ExitUtil synchronized blocks reduced. #4255
+
+
+Reduce the ExitUtil synchronized block scopes so System.exit 
+and Runtime.halt calls aren't within their boundaries,
+so ExitUtil wrappers do not block each other.
+
+Enlarged catches to all Throwables (not just Exceptions).
+
+Contributed by Remi Catherinot",['0ca4868aa2a9218f51b1ded7d9552c3ac58c8836'],2.0,2.0,243.0,38.0,297.0,HADOOP-18217,shutdownhookmanager should not be multithreaded (deadlock possible),Bug,Resolved,Fixed
+f1bd4e117e8baf036c2d8c0d35818e4644032177,Ashutosh Gupta,2022-07-13 12:56:56+01:00,GitHub,2022-07-13 12:56:56+01:00,"HADOOP-18336.Tag FSDataInputStream.getWrappedStream() @Public/@Stable (#4555)
+
+
+Contributed by: Ashutosh Gupta",['4c4a940da279fd76d4839efbe9b2b56e34c6f9ff'],1.0,1.0,2.0,1.0,190.0,HADOOP-18336,tag FSDataInputStream.getWrappedStream() @Public/@Stable,Improvement,Resolved,Fixed
+8774f178686487007dcf8c418c989b785a529000,xuzq,2022-07-16 05:18:46+08:00,GitHub,2022-07-15 14:18:46-07:00,HADOOP-13144. Enhancing IPC client throughput via multiple connections per user (#4542),['9376b659896e1e42bacc6fdeaac9ac3d8eb41c49'],8.0,8.0,226.0,7.0,5277.0,HADOOP-13144,Enhancing IPC client throughput via multiple connections per user,Improvement,Resolved,Fixed
+e664f81ce720e1f2aecfd795656538cfd171a2a0,Ashutosh Gupta,2022-07-20 17:15:39+01:00,GitHub,2022-07-21 00:15:39+08:00,"HADOOP-18333.Upgrade jetty version to 9.4.48.v20220622 (#4553)
+
+Co-authored-by: Ashutosh Gupta <ashugpt@amazon.com>",['6415eb04e8226667268058a88521d6020e2a6a8c'],3.0,1.0,3.0,3.0,1384.0,HADOOP-18333,hadoop-client-runtime impact by CVE-2022-2047 CVE-2022-2048 due to shaded jetty,Improvement,Resolved,Fixed
+4c8cd61961c567b7469ac7730244d67370d4f3f4,Mehakmeet Singh,2022-07-27 00:59:22+05:18,GitHub,2022-07-26 20:41:22+01:00,"HADOOP-17461. Collect thread-level IOStatistics. (#4352)
+
+
+This adds a thread-level collector of IOStatistics, IOStatisticsContext,
+which can be:
+* Retrieved for a thread and cached for access from other
+  threads.
+* reset() to record new statistics.
+* Queried for live statistics through the
+  IOStatisticsSource.getIOStatistics() method.
+* Queries for a statistics aggregator for use in instrumented
+  classes.
+* Asked to create a serializable copy in snapshot()
+
+The goal is to make it possible for applications with multiple
+threads performing different work items simultaneously
+to be able to collect statistics on the individual threads,
+and so generate aggregate reports on the total work performed
+for a specific job, query or similar unit of work.
+
+Some changes in IOStatistics-gathering classes are needed for 
+this feature
+* Caching the active context's aggregator in the object's
+  constructor
+* Updating it in close()
+
+Slightly more work is needed in multithreaded code,
+such as the S3A committers, which collect statistics across
+all threads used in task and job commit operations.
+
+Currently the IOStatisticsContext-aware classes are:
+* The S3A input stream, output stream and list iterators.
+* RawLocalFileSystem's input and output streams.
+* The S3A committers.
+* The TaskPool class in hadoop-common, which propagates
+  the active context into scheduled worker threads.
+
+Collection of statistics in the IOStatisticsContext
+is disabled process-wide by default until the feature 
+is considered stable.
+
+To enable the collection, set the option
+fs.thread.level.iostatistics.enabled
+to ""true"" in core-site.xml;
+	
+Contributed by Mehakmeet Singh and Steve Loughran",['213ea037589d8a69c34e1f98413ddbc06dfd42bf'],26.0,26.0,1459.0,80.0,10417.0,HADOOP-17461,Add thread-level IOStatistics Context,Sub-task,Resolved,Fixed
+a5b12c8010447901d269309633f500287cf0d636,Mukund Thakur,2022-07-28 21:45:37+05:18,GitHub,2022-07-28 21:45:37+05:18,"HADOOP-18227. Add input stream IOStats for vectored IO api in S3A. (#4636)
+
+part of HADOOP-18103.
+
+Contributed By: Mukund Thakur",['bf570bd4acd9ebccada80a68aa1c5fbf73ca60bf'],10.0,10.0,303.0,35.0,4418.0,HADOOP-18227,Add input stream IOstats for vectored IO api in S3A.,Sub-task,Resolved,Fixed
+66dec9d3227dc5e08066dcc01577492fad5cee89,Mukund Thakur,2022-08-04 03:56:04+05:18,GitHub,2022-08-04 03:56:04+05:18,"HADOOP-18355. Update previous index properly while validating overlapping ranges. (#4647)
+
+part of HADOOP-18103.
+
+Contributed By: Mukund Thakur",['c5ec7274355da31617399ae221d045b1d01902fd'],2.0,2.0,33.0,0.0,477.0,HADOOP-18355,Update previous index properly while validating overlapping ranges. ,Sub-task,Resolved,Fixed
+dbf73e16b1ea91b1de3dc96fa65481f03fd58bca,zhangshuyan0,2022-08-04 13:00:37+08:00,GitHub,2022-08-04 13:00:37+08:00,"HADOOP-18364. All method metrics related to the RPC protocol should be initialized. (#4624). Contributed by Shuyan Zhang.
+
+Reviewed-by: Erik Krogen <xkrogen@apache.org>
+Reviewed-by: Chao Sun <sunchao@apache.org>
+Signed-off-by: He Xiaoqiao <hexiaoqiao@apache.org>",['8eebf40b1afcc834007c2492cb73cfbd27e62498'],2.0,2.0,14.0,1.0,948.0,HADOOP-18364,All method metrics related to the RPC protocol should be initialized,Bug,Resolved,Fixed
+0aa08ef543a41790945b1be75c6b41b14d9f577b,Ashutosh Gupta,2022-08-04 13:56:38+01:00,GitHub,2022-08-04 18:14:38+05:18,"HADOOP-18363. Fix bug preventing hadoop-metrics2 from emitting metrics to > 1 Ganglia servers (#4627)
+
+* HADOOP-18363. Fix bug preventing hadoop-metrics2 from emitting metrics to > 1 Ganglia servers",['dbf73e16b1ea91b1de3dc96fa65481f03fd58bca'],2.0,2.0,67.0,49.0,253.0,HADOOP-18363,Fix bug preventing hadoop-metrics2 from emitting metrics to > 1 Ganglia servers.,Bug,Resolved,Fixed
+bd0f9a46e19c5138865d7e1bfded59b5673b615f,Ashutosh Gupta,2022-08-06 13:51:23+01:00,GitHub,2022-08-06 21:51:23+09:00,"HADOOP-18390. Fix out of sync import for HADOOP-18321 (#4694)
+
+Co-authored-by: Ashutosh Gupta <ashugpt@amazon.com>
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['b5642c5638d24c2e8ae7f29d5dc6e3f91bb47cf5'],4.0,4.0,17.0,16.0,432.0,HADOOP-18390,Fix out of sync import for HADOOP-18321,Bug,Resolved,Fixed
+d8d3325d2f6b337c6befc8d6711886d52e756ece,slfan1989,2022-08-08 05:05:39+08:00,GitHub,2022-08-08 02:23:39+05:18,HADOOP-18387. Fix incorrect placeholder in hadoop-common (#4679). Contributed by fanshilun.,['1cda2dcb6e861df9b09ee63a25b5f2b8df85232d'],2.0,2.0,3.0,4.0,342.0,HADOOP-18387,Fix incorrect placeholder in hadoop-common,Bug,Resolved,Fixed
+06f0f7db7951b6d49da0270716263579ad317a81,Viraj Jasani,2022-08-08 02:42:57-07:00,GitHub,2022-08-08 10:42:57+01:00,"HADOOP-18373. IOStatisticsContext tuning (#4705)
+
+
+The name of the option to enable/disable thread level statistics is
+""fs.iostatistics.thread.level.enabled"";
+
+There is also an enabled() probe in IOStatisticsContext which can
+be used to see if the thread level statistics is active.
+
+Contributed by Viraj Jasani",['d8d3325d2f6b337c6befc8d6711886d52e756ece'],5.0,4.0,28.0,7.0,687.0,HADOOP-18373,IOStatisticsContext tuning,Sub-task,Resolved,Fixed
+b28e4c6904433c05f3eb3e7f4ddbf790cfd676fd,Mukund Thakur,2022-08-12 01:30:00+05:18,GitHub,2022-08-12 01:30:00+05:18,"HADOOP-18392. Propagate vectored s3a input stream stats to file system stats. (#4704)
+
+part of HADOOP-18103.
+
+Contributed By: Mukund Thakur",['e9509ac467a9c5229ffaa2f64a830cfc5b7c0147'],3.0,3.0,172.0,134.0,1146.0,HADOOP-18392,Propagate vectored s3a input stream stats to file system stats.,Sub-task,Resolved,Fixed
+b737869e01fe3334b948a38fe3835e48873bf3a6,kevins-29,2022-08-13 01:05:13+02:00,GitHub,2022-08-12 16:05:13-07:00,HADOOP-18383. Codecs with @DoNotPool annotation are not closed causing memory leak (#4585),['e0c8c6eed4b123077f350740731d409f2d554e43'],5.0,5.0,113.0,1.0,865.0,HADOOP-18383,Codecs with @DoNotPool annotation are not closed causing memory leak,Bug,Resolved,Fixed
+d0fdb1d6e013748b2dd01ee81a4906ae7c0a0767,Paul King,2022-08-14 23:58:22+10:00,GitHub,2022-08-14 19:16:22+05:18,"HADOOP-18404. Fix broken link to wiki help page in org.apache.hadoop.util.Shell (#4718). Contributed by Paul King.
+
+Signed-off-by: Ayush Saxena <ayushsaxena@apache.org>",['d383cc452535b776542e1ebeb0932e4bb84b8f80'],1.0,1.0,1.0,1.0,769.0,HADOOP-18404,Fix broken link to wiki help page in org.apache.hadoop.util.Shell,Bug,Resolved,Fixed
+682931a6ace460d829954398eddecefeeac82b34,Steve Loughran,2022-08-18 13:53:06+01:00,GitHub,2022-08-18 13:53:06+01:00,"HADOOP-18028. High performance S3A input stream (#4752)
+
+
+This is the the preview release of the HADOOP-18028 S3A performance input stream.
+It is still stabilizing, but ready to test.
+
+Contains
+
+HADOOP-18028. High performance S3A input stream (#4109)
+	Contributed by Bhalchandra Pandit.
+
+HADOOP-18180. Replace use of twitter util-core with java futures (#4115)
+	Contributed by PJ Fanning.
+
+HADOOP-18177. Document prefetching architecture. (#4205)
+	Contributed by Ahmar Suhail
+
+HADOOP-18175. fix test failures with prefetching s3a input stream (#4212)
+ Contributed by Monthon Klongklaew
+
+HADOOP-18231.  S3A prefetching: fix failing tests & drain stream async.  (#4386)
+
+	* adds in new test for prefetching input stream
+	* creates streamStats before opening stream
+	* updates numBlocks calculation method
+	* fixes ITestS3AOpenCost.testOpenFileLongerLength
+	* drains stream async
+	* fixes failing unit test
+
+	Contributed by Ahmar Suhail
+
+HADOOP-18254. Disable S3A prefetching by default. (#4469)
+	Contributed by Ahmar Suhail
+
+HADOOP-18190. Collect IOStatistics during S3A prefetching (#4458)
+
+	This adds iOStatisticsConnection to the S3PrefetchingInputStream class, with
+	new statistic names in StreamStatistics.
+
+	This stream is not (yet) IOStatisticsContext aware.
+
+	Contributed by Ahmar Suhail
+
+HADOOP-18379 rebase feature/HADOOP-18028-s3a-prefetch to trunk
+HADOOP-18187. Convert s3a prefetching to use JavaDoc for fields and enums.
+HADOOP-18318. Update class names to be clear they belong to S3A prefetching
+	Contributed by Steve Loughran",['cd72f7e04280627c9a517dcc8a8ad8504c22569e'],61.0,59.0,9318.0,23.0,12704.0,HADOOP-18028,High performance S3A input stream with prefetching & caching,Improvement,Open,
+b7d4dc61bf43338767d6913b9e5882e044b35b9d,Steve Vaughan,2022-08-18 12:21:23-04:00,GitHub,2022-08-18 09:21:23-07:00,"HADOOP-18365. Update the remote address when a change is detected (#4692)
+
+Avoid reconnecting to the old address after detecting that the address has been updated.
+
+* Fix Checkstyle line length violation
+* Keep ConnectionId as Immutable for map key
+
+The ConnectionId is used as a key in the connections map, and updating the remoteId caused problems with the cleanup of connections when the removeMethod was used.
+
+Instead of updating the address within the remoteId, use the removeMethod to cleanup references to the current identifier and then replace it with a new identifier using the updated address.
+
+* Use final to protect immutable ConnectionId
+
+Mark non-test fields as private and final, and add a missing accessor.
+
+* Use a stable hashCode to allow safe IP addr changes
+* Add test that updated address is used
+
+Once the address has been updated, it should be used in future calls.  Check to ensure that a second request succeeds and that it uses the existing updated address instead of having to re-resolve.
+
+Signed-off-by: Nick Dimiduk <ndimiduk@apache.org>
+Signed-off-by: sokui
+Signed-off-by: XanderZu
+Signed-off-by: stack <stack@apache.org>",['d09dd4a0b95c2fbea4268dbb80b4e0b90082bbb1'],3.0,3.0,113.0,8.0,3266.0,HADOOP-18365,Updated addresses are still accessed using the old IP address,Improvement,Resolved,Fixed
+231e095802bb2ccb0edb2ea3da30206f81d59bda,Mukund Thakur,2022-08-22 23:07:29+05:18,GitHub,2022-08-22 23:07:29+05:18,"HADOOP-18407. Improve readVectored() api spec (#4760)
+
+part of HADOOP-18103.
+
+Contributed By: Mukund Thakur",['a9e5fb331311fc084fb3c7efdc55981c20d36e16'],2.0,1.0,10.0,0.0,27.0,HADOOP-18407,Improve vectored IO api spec. ,Sub-task,Resolved,Fixed
+17daad34d41272e41edff8eee9ec345c95e52690,Steve Vaughan,2022-08-22 15:22:23-04:00,GitHub,2022-08-22 12:22:23-07:00,HADOOP-18279. Cancel fileMonitoringTimer even if trustManager isn't defined (#4767),['231e095802bb2ccb0edb2ea3da30206f81d59bda'],1.0,1.0,3.0,1.0,214.0,HADOOP-18279,Cancel fileMonitoringTimer even if trustManager isn't defined,Bug,Resolved,Fixed
+4890ba505258726182c0521e7f7e2e999da49930,Simba Dzinamarira,2022-08-17 09:33:33-04:00,Owen O'Malley,2022-08-23 17:00:57-07:00,"HADOOP-18406: Adds alignment context to call path for creating RPC proxy with multiple connections per user.
+
+Fixes #4748
+
+Signed-off-by: Owen O'Malley <oomalley@linkedin.com>",['c37f01d95b55be98600cddcedec87615dbda33e8'],7.0,7.0,49.0,20.0,3923.0,HADOOP-18406,Adds alignment context to call path for creating RPC proxy with multiple connections per user.,Improvement,Resolved,Fixed
+19830c98bc2639581367050bbb257ebda374d6f6,Mukund Thakur,2022-08-31 21:29:41+05:18,GitHub,2022-08-31 21:29:41+05:18,"HADOOP-18391. Improvements in VectoredReadUtils#readVectored() for direct buffers (#4787)
+
+part of HADOOP-18103.
+
+Contributed By: Mukund Thakur",['84081a8cae7d050cc3dc2b3bddd298d769032120'],4.0,4.0,104.0,24.0,1296.0,HADOOP-18391,Improve VectoredReadUtils#readVectored() for direct buffers,Sub-task,Resolved,Fixed
+cc41ad63f9df9b67cf81703f76eee037923a68e5,Ayush Saxena,2022-09-07 03:56:51+05:18,GitHub,2022-09-06 18:38:51-04:00,"HADOOP-18388. Allow dynamic groupSearchFilter in LdapGroupsMapping. (#4798)
+
+* HADOOP-18388. Allow dynamic groupSearchFilter in LdapGroupsMapping.",['c947c326e8e7a649161fd26672870f5494b01b33'],4.0,2.0,97.0,3.0,1073.0,HADOOP-18388,Allow dynamic groupSearchFilter in LdapGroupsMapping,Improvement,Resolved,Fixed
+c664f953c9e6acf29ec66bbc809d58fe3fbb3ff8,Erik Krogen,2022-09-06 22:49:56-07:00,GitHub,2022-09-07 13:49:56+08:00,"HADOOP-18426. Use weighted calculation for MutableStat mean/variance to fix accuracy. (#4844). Contributed by Erik Krogen.
+
+Co-authored-by: Shuyan Zhang <zqingchai@gmail.com>
+Signed-off-by: He Xiaoqiao <hexiaoqiao@apache.org>",['cc41ad63f9df9b67cf81703f76eee037923a68e5'],2.0,2.0,74.0,40.0,452.0,HADOOP-18426,Improve the accuracy of MutableStat mean,Bug,Resolved,Fixed
+0db3ee5b4b93723d7c8584de458f3e4c6aa0d9e8,slfan1989,2022-09-09 02:41:21+08:00,GitHub,2022-09-08 11:41:21-07:00,HADOOP-18427. Improve ZKDelegationTokenSecretManager#startThead With recommended methods. (#4812),['03961b10c209e899a5cf0c1e6da756f46f5b53ae'],2.0,2.0,35.0,4.0,1210.0,HADOOP-18427,Improve ZKDelegationTokenSecretManager#startThead With recommended methods.,Improvement,Resolved,Fixed
+8732625f50b7e72b41a6d93b25727a077a69407b,Mukund Thakur,2022-09-09 21:34:08+05:18,GitHub,2022-09-09 21:34:08+05:18,"HADOOP-18439. Fix VectoredIO for LocalFileSystem when checksum is enabled. (#4862)
+
+
+part of HADOOP-18103.
+
+While merging the ranges in CheckSumFs, they are rounded up based on the
+value of checksum bytes size which leads to some ranges crossing the EOF
+thus they need to be fixed else it will cause EOFException during actual reads.
+
+Contributed By: Mukund Thakur",['5b85af87f0edeaded5f91c1b3317ddbf67d11d36'],4.0,4.0,139.0,23.0,2003.0,HADOOP-18439,Fix VectoredIO for LocalFileSystem when checksum is enabled.,Sub-task,Resolved,Fixed
+cde1f3af21b84a65fb27a5822b308413ea6296c5,slfan1989,2022-09-12 22:28:16+08:00,GitHub,2022-09-12 23:28:16+09:00,"HADOOP-18302. Remove WhiteBox in hadoop-common module. (#4457)
+
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['1923096adb577b2455ab63cac811ce6254857ffe'],16.0,15.0,413.0,384.0,10603.0,HADOOP-18302,Remove WhiteBox in hadoop-common module.,Sub-task,Resolved,Fixed
+86b84ed74e229f12d70a74ca3711710ff74b5632,slfan1989,2022-09-15 00:13:58+08:00,GitHub,2022-09-14 09:13:58-07:00,HADOOP-18452. Fix TestKMS#testKMSHAZooKeeperDelegationToken Failed By Hadoop-18427. (#4885),['8ce71c88821a019689f947fe19bc12a1d493123d'],2.0,2.0,43.0,1.0,1244.0,HADOOP-18452,Fix TestKMS#testKMSHAZooKeeperDelegationToken Failed By Hadoop-18427,Bug,Resolved,Fixed
+ce54b7e55d912b2f8c34801209c86518cd4642e5,GuoPhilipse,2022-09-15 00:53:25+08:00,GitHub,2022-09-15 00:53:25+08:00,HADOOP-18118. Fix KMS Accept Queue Size default value to 500 (#3972),['272844ee572be9de320ce64cc4fc136af6743920'],2.0,2.0,8.0,1.0,2053.0,HADOOP-18118,Fix KMS Accept Queue Size default value to 500,Improvement,Resolved,Fixed
+0f03299ebaff51de5087cc02586788b0b1b73af6,Ashutosh Gupta,2022-09-16 08:47:26+01:00,GitHub,2022-09-16 13:05:26+05:18,"HADOOP-16769. LocalDirAllocator to provide diagnostics when file creation fails (#4842)
+
+
+The patch provides detailed diagnostics of file creation failure in LocalDirAllocator.
+
+Contributed by: Ashutosh Gupta",['43c1ebae168eb64571d1a1533623dcec21620566'],2.0,2.0,39.0,4.0,768.0,HADOOP-16769,LocalDirAllocator to provide diagnostics when file creation fails,Improvement,Resolved,Fixed
+a73c4804d882d9bc1a424080f20c4902cb9db832,ZanderXu,2022-09-17 01:09:01+08:00,GitHub,2022-09-16 10:09:01-07:00,"HADOOP-18446. [SBN read] Add a re-queue metric to RpcMetrics to quantify the number of re-queued RPCs (#4871)
+
+Signed-off-by: Erik Krogen <xkrogen@apache.org>
+Co-authored-by: zengqiang.xu <zengqiang.xu@shopee.com>",['0f03299ebaff51de5087cc02586788b0b1b73af6'],3.0,3.0,63.0,0.0,3648.0,HADOOP-18446,Add a re-queue metric to RpcMetrics.java to quantify the number of re-queue RPCs,Improvement,Resolved,Fixed
+30c36ef25a335bc123fdae90b3366e582ad1b37a,Ashutosh Gupta,2022-09-19 05:45:05+01:00,GitHub,2022-09-19 13:45:05+09:00,"HADOOP-18400. Fix file split duplicating records from a succeeding split when reading BZip2 text files (#4732)
+
+Co-authored-by: Ashutosh Gupta <ashugpt@amazon.com>
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['a73c4804d882d9bc1a424080f20c4902cb9db832'],3.0,3.0,350.0,14.0,833.0,HADOOP-18400, Fix file split duplicating records from a succeeding split when reading BZip2 text files ,Bug,Resolved,Fixed
+620dd37712a4aab779e3a21e1a8cd7bd2de34874,GuoPhilipse,2022-09-20 00:10:00+08:00,GitHub,2022-09-19 09:10:00-07:00,"HADOOP-18118. [Follow on] Fix test failure in TestHttpServer (#4900)
+
+Signed-off-by: Erik Krogen <xkrogen@apache.org>",['30c36ef25a335bc123fdae90b3366e582ad1b37a'],1.0,1.0,4.0,1.0,668.0,HADOOP-18118,Fix KMS Accept Queue Size default value to 500,Improvement,Resolved,Fixed
+2950c5405ba95ddd53f02cd095184eeb73923bf9,Ashutosh Gupta,2022-09-20 18:39:59+01:00,GitHub,2022-09-20 22:57:59+05:18,"HADOOP-16674. Fix when TestDNS.testRDNS can fail with ServiceUnavailableException (#4802). Contributed by Ashutosh Gupta.
+
+Signed-off-by: Ayush Saxena <ayushsaxena@apache.org>",['fd687bb4c4edc18c560c9a3dfe8d1f061031288d'],1.0,1.0,4.0,1.0,142.0,HADOOP-16674,TestDNS.testRDNS can fail with ServiceUnavailableException,Bug,Resolved,Fixed
+084b68e380e738033fa51393b683b10c354a9ce6,Viraj Jasani,2022-09-21 11:52:41-07:00,GitHub,2022-09-22 00:10:41+05:18,"HADOOP-18455. S3A prefetching executor should be closed (#4879)
+
+follow-on patch to HADOOP-18186. 
+
+Contributed by: Viraj Jasani",['740e1ef357f13c433b606f3e3d4db0cee1b6e773'],4.0,3.0,25.0,10.0,3304.0,HADOOP-18455,s3a prefetching Executor should be closed,Sub-task,Resolved,Fixed
+0676495950fc7f2716a9b5ae7da622c3a8450f71,Steve Loughran,2022-09-23 09:54:31+01:00,GitHub,2022-09-23 09:54:31+01:00,"HADOOP-18456. NullPointerException in ObjectListingIterator. (#4909)
+
+
+This problem surfaced in impala integration tests
+   IMPALA-11592. TestLocalCatalogRetries.test_fetch_metadata_retry fails in S3 build
+after the change
+  HADOOP-17461. Add thread-level IOStatistics Context
+The actual GC race condition came with
+ HADOOP-18091. S3A auditing leaks memory through ThreadLocal references
+
+The fix for this is, if our hypothesis is correct, in WeakReferenceMap.create()
+where a strong reference to the new value is kept in a local variable
+*and referred to later* so that the JVM will not GC it.
+
+Along with the fix, extra assertions ensure that if the problem is not fixed,
+applications will fail faster/more meaningfully. 
+
+Contributed by Steve Loughran.",['9a29075f915173e24c77cf8aea2908da0aa328e3'],5.0,5.0,220.0,26.0,399.0,HADOOP-18456,NullPointerException in ObjectListingIterator's constructor,Bug,Resolved,Fixed
+747fb9210718ac505830cffab82d4e39d7bab639,Xing Lin,2022-09-23 10:37:51-07:00,GitHub,2022-09-23 10:37:51-07:00,"HADOOP-18444 Add Support for localized trash for ViewFileSystem in Trash.moveToAppropriateTrash (#4869)
+
+* HADOOP-18444 Add Support for localized trash for ViewFileSystem in Trash.moveToAppropriateTrash
+
+Signed-off-by: Xing Lin <xinglin@linkedin.com>",['0676495950fc7f2716a9b5ae7da622c3a8450f71'],2.0,2.0,65.0,1.0,149.0,HADOOP-18444,Add Support for localized trash for ViewFileSystem in Trash.moveToAppropriateTrash,Bug,Resolved,Fixed
+735e35d6484ca9908efeaa7c2f6f4d654b1fcf41,Mukund Thakur,2022-09-27 21:01:07+05:18,GitHub,2022-09-27 21:01:07+05:18,"HADOOP-18347. S3A Vectored IO to use bounded thread pool. (#4918)
+
+
+part of HADOOP-18103.
+
+Also introducing a config fs.s3a.vectored.active.ranged.reads
+to configure the maximum number of number of range reads a
+single input stream can have active (downloading, or queued)
+to the central FileSystem instance's pool of queued operations.
+This stops a single stream overloading the shared thread pool.
+
+Contributed by: Mukund Thakur",['d9f435f6acabb28ab8a670a4a9081f0164008b1e'],5.0,4.0,39.0,9.0,4429.0,HADOOP-18347,Restrict vectoredIO threadpool to reduce memory pressure,Sub-task,Resolved,Fixed
+e22f5e75aeff23d6c8dc1b67cb6f4fd4a4c416dc,Mukund Thakur,2022-09-28 23:04:47+05:18,GitHub,2022-09-28 23:04:47+05:18,"HADOOP-18463. Add an integration test to process data asynchronously during vectored read. (#4921)
+
+
+part of HADOOP-18103.
+
+Contributed by: Mukund Thakur",['42d883937d5d8f8378e4f63d132f6ed97d13b4bc'],1.0,1.0,68.0,0.0,384.0,HADOOP-18463,Add an integration test to process data asynchronously during vectored read.,Sub-task,Resolved,Fixed
+38b2ed2151a77cb838ed5b4e1ae7bae3964e5590,Steve Loughran,2022-10-06 11:49:38+01:00,GitHub,2022-10-06 11:49:38+01:00,"HADOOP-18442. Remove openstack support (#4855)
+
+
+Contributed by Steve Loughran",['1a9faf123d920b7b0170a18b51cb274dca6aaed6'],106.0,86.0,1.0,13717.0,143.0,HADOOP-18442,Remove the hadoop-openstack module,Improvement,Resolved,Fixed
+1675a28e5a0b9258d08f5aa8c1a759d385be4429,Alessandro Passaro,2022-10-06 12:00:41+01:00,GitHub,2022-10-06 12:00:41+01:00,"HADOOP-18378. Implement lazy seek in S3A prefetching. (#4955)
+
+
+Make S3APrefetchingInputStream.seek() completely lazy. Calls to seek() will not affect the current buffer nor interfere with prefetching, until read() is called.
+
+This change allows various usage patterns to benefit from prefetching, e.g. when calling readFully(position, buffer) in a loop for contiguous positions the intermediate internal calls to seek() will be noops and prefetching will have the same performance as in a sequential read.
+
+Contributed by Alessandro Passaro.",['38b2ed2151a77cb838ed5b4e1ae7bae3964e5590'],8.0,7.0,207.0,126.0,1115.0,HADOOP-18378,"Implement readFully(long position, byte[] buffer, int offset, int length)",Sub-task,Resolved,Fixed
+8336b91329c3f6ac8af1a706096461dc4d51105d,PJ Fanning,2022-10-06 19:30:51+01:00,GitHub,2022-10-06 19:30:51+01:00,"HADOOP-18469. Add secure XML parser factories to XMLUtils (#4940)
+
+
+Add to XMLUtils a set of methods to create secure XML Parsers/transformers, locking down DTD, schema, XXE exposure.
+
+Use these wherever XML parsers are created.
+
+Contributed by PJ Fanning",['b31b3ea0f6c155343b506ed90562a86758883668'],10.0,8.0,257.0,23.0,3572.0,HADOOP-18469,Add XMLUtils methods to centralise code that creates secure XML parsers,Improvement,Resolved,Fixed
+03d600fa82203a930bcc13c1d682d2d6096a3c10,belugabehr,2022-10-11 06:56:32-04:00,GitHub,2022-10-11 11:56:32+01:00,HADOOP-17779: Lock File System Creator Semaphore Uninterruptibly (#3158),['d14b88c698e6cc560b30b2fe4e25fe6e09c996d2'],1.0,1.0,1.0,6.0,2118.0,HADOOP-17779,Lock File System Creator Semaphore Uninterruptibly,Improvement,Resolved,Fixed
+136291d2d5b81bd7cb20d5b59997368876049ff3,ZanderXu,2022-10-17 12:44:25+08:00,GitHub,2022-10-17 12:44:25+08:00,"HADOOP-18462. InstrumentedWriteLock should consider Reentrant case (#4919). Contributed by ZanderXu.
+
+Reviewed-by: Ashutosh Gupta <ashugpt@amazon.com>
+Signed-off-by: He Xiaoqiao <hexiaoqiao@apache.org>",['4ff6c9b8de6fe8169b67723c764b50ce9d74931f'],3.0,3.0,134.0,6.0,346.0,HADOOP-18462,InstrumentedWriteLock should consider Reentrant case ,Improvement,Resolved,Fixed
+7f69e092900dde1dcb1def8f9402627dd082c1c2,FuzzingTeam,2022-10-20 22:30:17+05:18,GitHub,2022-10-20 18:12:17+01:00,"HADOOP-18471. Fixed ArrayIndexOutOfBoundsException in DefaultStringifier (#4957)
+
+
+Contributed by FuzzingTeam",['a996d889ec035e3b6134e94b50efc990525c3bbb'],2.0,2.0,7.0,1.0,187.0,HADOOP-18471,An unhandled ArrayIndexOutOfBoundsException in DefaultStringifier.storeArray() if provided with an empty input,Bug,Resolved,Fixed
+0a26d84df105652489cb84379443b9efa0b40332,Ashutosh Gupta,2022-10-25 10:22:25+01:00,GitHub,2022-10-25 17:22:25+08:00,"HADOOP-9946. NumAllSinks metrics shows lower value than NumActiveSinks (#5002)
+
+Reviewed-by: Akira Ajisaka <aajisaka@apache.org>",['e6edbf1b4b914c687cef25be58c29f835bb15800'],2.0,2.0,4.0,1.0,1070.0,HADOOP-9946,NumAllSinks metrics shows lower value than NumActiveSinks,Bug,Resolved,Fixed
+f140506d6756f8d9aaeb728e5309ab27c513f996,FuzzingTeam,2022-10-25 22:25:49+05:18,GitHub,2022-10-25 18:07:49+01:00,"HADOOP-18504. Fixed an unhandled NullPointerException in class KeyProvider (#5064)
+
+
+Contributed by FuzzingTeam",['0a26d84df105652489cb84379443b9efa0b40332'],2.0,2.0,5.0,1.0,660.0,HADOOP-18504, An unhandled NullPointerException in class KeyProvider,Bug,Resolved,Fixed
+3b10cb5a3b23f534ee4eb50579082d8e742dae41,Steve Loughran,2022-10-31 21:12:13+00:00,GitHub,2022-10-31 21:12:13+00:00,"HADOOP-18507. VectorIO FileRange type to support a ""reference"" field (#5076)
+
+
+Contributed by Steve Loughran",['b1f418f8027c2d2a1a1c17ec3a8d23ceaaf8d89c'],5.0,5.0,141.0,40.0,654.0,HADOOP-18507,"VectorIO FileRange type to support a ""reference"" field",Sub-task,Resolved,Fixed
+7002e214b8861e007a0279a8fb5dfedad3ffe3c4,ted12138,2022-11-09 10:21:43+08:00,GitHub,2022-11-09 10:21:43+08:00,HADOOP-18502. MutableStat should return 0 when there is no change (#5058),['7f9ca101e2ae057a42829883596085732f8d5fa6'],2.0,2.0,26.0,5.0,482.0,HADOOP-18502,Hadoop metrics should return 0 when there is no change,Improvement,Resolved,Fixed
+f68f1a45783d7eb3f982fadef800b58ab8b763f3,zhengchenyu,2022-11-09 19:18:31+08:00,GitHub,2022-11-09 19:18:31+08:00,HADOOP-18433. Fix main thread name for . (#4838),['7002e214b8861e007a0279a8fb5dfedad3ffe3c4'],1.0,1.0,1.0,2.0,2912.0,HADOOP-18433,Fix main thread name.,Improvement,Resolved,Fixed
+7d39abd799a5f801a9fd07868a193205ab500bfa,Hu Xinqiu,2022-11-17 17:50:39+08:00,GitHub,2022-11-17 17:50:39+08:00,HADOOP-18429. fix infinite loop in MutableGaugeFloat#incr(float) (#4823),['eccd2d04924edcc4498ddb05755b8b304a32c86a'],2.0,2.0,13.0,1.0,432.0,HADOOP-18429,MutableGaugeFloat#incr(float) get stuck in an infinite loop,Bug,Resolved,Fixed
+1ea5db52dd930a3b9ba3dbe04f564a38bbc5bf68,Owen O'Malley,2022-11-18 16:24:45+00:00,GitHub,2022-11-18 16:24:45+00:00,"HADOOP-18324. Interrupting RPC Client calls can lead to thread exhaustion. (#4527)
+
+* Exactly 1 sending thread per an RPC connection.
+* If the calling thread is interrupted before the socket write, it will be skipped instead of sending it anyways.
+* If the calling thread is interrupted during the socket write, the write will finish.
+* RPC requests will be written to the socket in the order received.
+* Sending thread is only started by the receiving thread.
+* The sending thread periodically checks the shouldCloseConnection flag.",['7d39abd799a5f801a9fd07868a193205ab500bfa'],3.0,3.0,255.0,131.0,4409.0,HADOOP-18324,Interrupting RPC Client calls can lead to thread exhaustion,Bug,Resolved,Fixed
+696d0420543d5932d88c7dd42108e575d5405585,Ashutosh Gupta,2022-11-21 05:54:50+00:00,GitHub,2022-11-21 14:54:50+09:00,"HADOOP-8728. Display (fs -text) shouldn't hard-depend on Writable serialized sequence files. (#5010)
+
+Co-authored-by: Ashutosh Gupta <ashugpt@amazon.com>
+Signed-off-by: Akira Ajisaka <aajisaka@apache.org>",['2e993fdf4e76ac18353b74b841362b58f4da61d5'],2.0,2.0,42.0,22.0,448.0,HADOOP-8728,Display (fs -text) shouldn't hard-depend on Writable serialized sequence files.,Bug,Resolved,Fixed
+0ef572abed624011ad9a9e69d725774d6d00b75b,HarshitGupta11,2022-11-29 20:09:22+05:18,GitHub,2022-11-29 14:51:22+00:00,"HADOOP-18530. ChecksumFileSystem::readVectored might return byte buffers not positioned at 0 (#5168)
+
+
+Contributed by Harshit Gupta",['35c65005d0e67c5b43db3d2b2850cffd58a3c1a1'],2.0,2.0,13.0,0.0,549.0,HADOOP-18530,ChecksumFileSystem::readVectored might return byte buffers not positioned at 0,Sub-task,Resolved,Fixed
+b666075a413f70b8b481148edc4c20a52430d117,Steve Loughran,2022-12-06 09:58:51+00:00,GitHub,2022-12-06 09:58:51+00:00,"HADOOP-18560. AvroFSInput opens a stream twice and discards the second one without closing (#5186)
+
+
+This is needed for branches with  the hadoop-common changes of
+HADOOP-16202. Enhanced openFile()",['84b33b897cb36701a58a971d884adc313e893bef'],1.0,1.0,0.0,1.0,48.0,HADOOP-18560,AvroFSInput opens a stream twice and discards the second one without closing,Sub-task,Resolved,Fixed
+a46b20d25f12dfb6af1d89c6bd8e39220cc8c928,Jack Richard Buggins,2022-12-10 14:27:05+00:00,GitHub,2022-12-10 14:27:05+00:00,"HADOOP-18329. Support for IBM Semeru JVM > 11.0.15.0 Vendor Name Changes (#4537)
+
+
+The static boolean PlatformName.IBM_JAVA now identifies
+Java 11+ IBM Semeru runtimes as IBM JVM releases.
+
+Contributed by Jack Buggins.",['0a7dfcc33217a2b3936ae129e7becfbbc0d944f8'],3.0,3.0,95.0,14.0,440.0,HADOOP-18329,Add support for IBM Semeru OE JRE 11.0.15.0 and greater,Bug,Reopened,
+1cecf8ab7041fc4c69b376cc86b992b39ad2abc6,Steve Loughran,2022-12-14 14:01:28+00:00,GitHub,2022-12-14 14:01:28+00:00,"HADOOP-18183. s3a audit logs to publish range start/end of GET requests. (#5110)
+
+The start and end of the range is set in a new audit param ""rg"",
+e.g ""?rg=100-200""
+
+Contributed by Ankit Saurabh",['85ec7969a7d7fe2168f1fceb8bce1f6388a8d46d'],5.0,4.0,102.0,0.0,648.0,HADOOP-18183,s3a audit logs to publish range start/end of GET requests in audit header,Sub-task,Open,
+aaf92fe1839b8bc732582445e9bbf019c17f3ef0,Steve Loughran,2022-12-14 18:21:03+00:00,GitHub,2022-12-14 18:21:03+00:00,"HADOOP-18526. Leak of S3AInstrumentation instances via hadoop Metrics references (#5144)
+
+
+This has triggered an OOM in a process which was churning through s3a fs
+instances; the increased memory footprint of IOStatistics amplified what
+must have been a long-standing issue with FS instances being created
+and not closed()
+
+*  Makes sure instrumentation is closed when the FS is closed.
+*  Uses a weak reference from metrics to instrumentation, so even
+   if the FS wasn't closed (see HADOOP-18478), this back reference
+   would not cause the S3AInstrumentation reference to be retained.
+*  If S3AFileSystem is configured to log at TRACE it will log the
+   calling stack of initialize(), so help identify where the
+   instance is being created. This should help track down
+   the cause of instance leakage.
+
+Contributed by Steve Loughran.",['63b9a6a2b6df8d0153be5c9d71b1829e4dbf624f'],6.0,5.0,287.0,30.0,4516.0,HADOOP-18526,Leak of S3AInstrumentation instances via hadoop Metrics references,Sub-task,Resolved,Fixed
+32414cfe46c6b691f6fa84896207941124dd1317,Mehakmeet Singh,2022-12-15 10:07:18+05:18,GitHub,2022-12-15 10:07:18+05:18,"HADOOP-18574. Changing log level of IOStatistics increment to make the DEBUG logs less noisy (#5223)
+
+
+Contributed by: Mehakmeet Singh",['6172c3192d99679a4a4717f907bff0ff417699b4'],1.0,1.0,1.0,1.0,271.0,HADOOP-18574,Changing log level of IOStatistics increment to make the DEBUG logs less noisy,Bug,Resolved,Fixed
+f7b1bb4dccc83eb26e661241ebf9f767f52b291b,Steve Loughran,2022-12-15 11:42:36+00:00,GitHub,2022-12-15 11:42:36+00:00,"HADOOP-18573. Improve error reporting on non-standard kerberos names (#5221)
+
+
+The kerberos RPC does not declare any restriction on
+characters used in kerberos names, though
+implementations MAY be more restrictive.
+
+If the kerberos controller supports use non-conventional
+principal names *and the kerberos admin chooses to use them*
+this can confuse some of the parsing.
+
+The obvious solution is for the enterprise admins to ""not do that""
+as a lot of things break, bits of hadoop included.
+
+Harden the hadoop code slightly so at least we fail more gracefully,
+so people can then get in touch with their sysadmin and tell them
+to stop it.",['32414cfe46c6b691f6fa84896207941124dd1317'],2.0,2.0,9.0,5.0,1280.0,HADOOP-18573,Improve error reporting on non-standard kerberos names,Improvement,Resolved,Fixed
+ca3526da9283500643479e784a779fb7898b6627,Chengbing Liu,2022-12-17 01:15:11+08:00,GitHub,2022-12-16 09:15:11-08:00,"HADOOP-18567. LogThrottlingHelper: properly trigger dependent recorders in cases of infrequent logging (#5215)
+
+Signed-off-by: Erik Krogen <xkrogen@apache.org>
+Co-authored-by: Chengbing Liu <liuchengbing@qiyi.com>",['f7bdf6c667d503c0eebbc3efcdfe4ba6bf2d6275'],2.0,2.0,25.0,3.0,270.0,HADOOP-18567,LogThrottlingHelper: the dependent recorder is not triggered correctly,Bug,Resolved,Fixed
+6a07b5dc109ce9088d52b52d6061bec2cc9a2285,PJ Fanning,2022-12-18 13:25:10+01:00,GitHub,2022-12-18 12:25:10+00:00,"HADOOP-18575. Make XML transformer factory more lenient (#5224)
+
+
+Due diligence followup to
+HADOOP-18469. Add secure XML parser factories to XMLUtils (#4940)
+
+Contributed by P J Fanning",['33785fc5add52434184e0b211c3ae03ec6deb778'],2.0,2.0,42.0,4.0,202.0,HADOOP-18575,Make XML transformer factory more lenient,Task,Resolved,Fixed
+a65d24488a858ec3a2d4158071426288805d3157,Surendra Singh Lilhore,2023-01-08 23:43:06+05:18,GitHub,2023-01-08 23:43:06+05:18,"HADOOP-18581 : Handle Server KDC re-login when Server and Client run … (#5248)
+
+* HADOOP-18581 : Handle Server KDC re-login when Server and Client run in same JVM.",['cd19da130991b3db02fcc13e1552a5af0bb61c54'],2.0,2.0,85.0,2.0,4453.0,HADOOP-18581,Handle Server KDC re-login when Server and Client run in same JVM.,Bug,Resolved,Fixed
+a90e424d9ff30a0510e7a29adc01ebdc7754a20e,huangxiaoping,2023-01-13 05:21:21+08:00,GitHub,2023-01-12 13:21:21-08:00,"HADOOP-18591. Fix a typo in Trash (#5291)
+
+Signed-off-by: Tao Li <tomscut@apache.org>
+Signed-off-by: Chris Nauroth <cnauroth@apache.org>",['3d21cff263c68a45b45b927e3ddb411e925d8eb6'],1.0,1.0,1.0,1.0,78.0,HADOOP-18591,Fix a typo in Trash,Bug,Resolved,Fixed
+d81d98388c794b53152f4a80263694c1bf77adc0,PJ Fanning,2023-01-16 14:15:37+01:00,GitHub,2023-01-16 13:15:37+00:00,"HADOOP-18575: followup: try to avoid repeatedly hitting exceptions when transformer factories do not support attributes (#5253)
+
+
+Part of HADOOP-18469 and the hardening of XML/XSL parsers.
+Followup to the main HADOOP-18575 patch, to improve performance when
+working with xml/xsl engines which don't support the relevant attributes.
+
+Include this change when backporting.
+
+Contributed by PJ Fanning.",['38453f85896d04d2c6c8a84a3add74c7b4200106'],2.0,2.0,45.0,17.0,220.0,HADOOP-18575,Make XML transformer factory more lenient,Task,Resolved,Fixed

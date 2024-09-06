@@ -1,0 +1,38 @@
+# Import repo
+from pydriller import Repository
+
+# Traverse commits
+for commit in Repository('https://github.com/jupelk/hadoop.git').traverse_commits():
+    print(commit.hash, commit.author.name, commit.msg)
+
+for commit in Repository('https://github.com/jupelk/hadoop.git').traverse_commits():   
+      for file in commit.modified_files:
+          print(file.filename, ' has changed')
+
+# Analyze single commit
+for commit in Repository('https://github.com/jupelk/hadoop.git', only_in_branch='trunk', 
+only_modifications_with_file_types=['.java'], 
+only_no_merge=True, single='4ef27a596fd1d7be5e437ab444b12fe450e79e79').traverse_commits():
+  #print(commit.hash, commit.author.name, commit.msg)
+  print(
+      'The commit {} has been modified by {}, '
+      'committed by {} on date {}'.format(
+          commit.hash,
+          commit.author.name,
+          commit.committer.name,
+          commit.committer_date
+          )
+    )
+  for file in commit.modified_files:
+    print(file.filename, ' has changed', file.change_type, file.added_lines, file.deleted_lines, file.changed_methods, file.nloc)          
+
+#get the next commit
+gen = repo.traverse_commits()
+commit = next(iter(gen))    
+
+#filter
+[i.filename for i in commit.modified_files if i.new_path.startswith('hadoop-common-project')]
+
+#filter
+if len([i for i in commit.modified_files if i.new_path.startswith('hadoop-common-project')]) > 0:
+    print('This commit has changes in hadoop-common-project')

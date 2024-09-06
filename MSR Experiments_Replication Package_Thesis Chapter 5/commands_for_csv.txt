@@ -1,0 +1,21 @@
+import csv
+with open('test.csv', 'w') as w_file:
+    writer = csv.writer(w_file)
+    writer.writerow(["ID", "Name", "Location"])
+    writer.writerow([1, "Max", "Netherland"])
+    writer.writerow([2, "Hamilton", "UK"])
+    writer.writerow([3, "Carlos", "Spain"])
+
+    import csv
+
+rows = [["ID", "Name", "Location"], [1, "Max", "Netherland"], [2, "Hamilton", "UK"], [3, "Carlos", "Spain"]]
+
+with open('ghost_write_rows.csv', 'w') as w_file:
+    writer = csv.writer(w_file)
+    writer.writerows(rows)
+
+import csv
+
+with open('ghost_write_rows.csv', 'a') as a_file:
+    writer_append = csv.writer(a_file)
+    writer_append.writerow([4, "Mick", "Germany"])   
